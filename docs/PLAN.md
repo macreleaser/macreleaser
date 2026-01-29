@@ -9,6 +9,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 **Goal**: End-to-end workflow from init to GitHub release with bare minimum viable functionality
 
 #### Phase 1: Core Foundation + Minimal Config Schema
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-01.md)**
 - Basic CLI structure and configuration parsing
 - YAML validation and error handling
 - GitHub API client setup
