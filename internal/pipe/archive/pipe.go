@@ -1,0 +1,27 @@
+package archive
+
+import (
+	"github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/validate"
+)
+
+// Pipe validates archive configuration
+type Pipe struct{}
+
+func (Pipe) String() string { return "validating archive configuration" }
+
+func (Pipe) Run(ctx *context.Context) error {
+	cfg := ctx.Config.Archive
+
+	if err := validate.RequiredSlice(cfg.Formats, "archive.formats"); err != nil {
+		return err
+	}
+
+	validFormats := []string{"dmg", "zip", "app"}
+	if err := validate.AllOneOf(cfg.Formats, validFormats, "archive.formats"); err != nil {
+		return err
+	}
+
+	ctx.Logger.Debug("Archive configuration validated successfully")
+	return nil
+}
