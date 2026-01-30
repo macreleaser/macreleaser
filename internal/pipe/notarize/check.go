@@ -5,12 +5,12 @@ import (
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
-// Pipe validates notarization configuration
-type Pipe struct{}
+// CheckPipe validates notarization configuration
+type CheckPipe struct{}
 
-func (Pipe) String() string { return "validating notarization configuration" }
+func (CheckPipe) String() string { return "validating notarization configuration" }
 
-func (Pipe) Run(ctx *context.Context) error {
+func (CheckPipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config.Notarize
 
 	if err := validate.RequiredString(cfg.AppleID, "notarize.apple_id"); err != nil {

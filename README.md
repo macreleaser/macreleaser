@@ -82,9 +82,9 @@ Notes:
 
 - `macreleaser init` - Generate example configuration
 - `macreleaser check` - Validate configuration file
-- `macreleaser build` - Build and archive project (Phase 2)
-- `macreleaser release` - Full release process including Homebrew
-- `macreleaser snapshot` - Test release with snapshot version
+- `macreleaser build` - Build, archive, and package project
+- `macreleaser release` - Full release process (signing, notarization, and upload coming soon)
+- `macreleaser snapshot` - Test build with snapshot version (falls back to timestamp if no git tags)
 
 ## Requirements
 

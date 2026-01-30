@@ -1,9 +1,13 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/macreleaser/macreleaser/pkg/config"
+	macContext "github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/pipeline"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,4 +41,46 @@ func ExitWithErrorf(logger *logrus.Logger, format string, args ...interface{}) {
 func ExitWithErrorNoLoggerf(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, "ERROR: "+format+"\n", args...)
 	os.Exit(1)
+}
+
+// runPipelineCommand is the shared implementation for build, release, and snapshot.
+// resolveVersion returns the version string to use; commandName appears in error messages.
+func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) string) {
+	logger := SetupLogger(GetDebugMode())
+	configPath := GetConfigPath()
+
+	cfg, err := config.LoadConfig(configPath)
+	if err != nil {
+		ExitWithErrorf(logger, "Failed to load configuration: %v", err)
+	}
+
+	logger.Info("Configuration loaded successfully")
+
+	version := resolveVersion(logger)
+
+	ctx := macContext.NewContext(context.Background(), cfg, logger)
+	ctx.Version = version
+
+	if err := pipeline.RunAll(ctx); err != nil {
+		ExitWithErrorf(logger, "%s failed: %v", commandName, err)
+	}
+
+	printArtifactSummary(ctx)
+}
+
+// printArtifactSummary prints a concise summary of produced artifacts.
+func printArtifactSummary(ctx *macContext.Context) {
+	ctx.Logger.Info("---")
+	ctx.Logger.Infof("Build complete for %s %s", ctx.Config.Project.Name, ctx.Version)
+
+	if ctx.Artifacts.AppPath != "" {
+		ctx.Logger.Infof("  App: %s", ctx.Artifacts.AppPath)
+	}
+
+	for _, pkg := range ctx.Artifacts.Packages {
+		ctx.Logger.Infof("  Package: %s", pkg)
+	}
+
+	fmt.Println()
+	ctx.Logger.Infof("Artifacts in: %s", ctx.Artifacts.BuildOutputDir)
 }

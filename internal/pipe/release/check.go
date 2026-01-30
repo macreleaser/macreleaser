@@ -5,12 +5,12 @@ import (
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
-// Pipe validates release configuration
-type Pipe struct{}
+// CheckPipe validates release configuration
+type CheckPipe struct{}
 
-func (Pipe) String() string { return "validating release configuration" }
+func (CheckPipe) String() string { return "validating release configuration" }
 
-func (Pipe) Run(ctx *context.Context) error {
+func (CheckPipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config.Release.GitHub
 
 	if err := validate.RequiredString(cfg.Owner, "release.github.owner"); err != nil {

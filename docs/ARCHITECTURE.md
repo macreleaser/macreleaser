@@ -22,10 +22,13 @@ macreleaser/
 │   └── main.go               # Thin entry point, delegates to pkg/cli
 │
 ├── pkg/                      # Public API packages
+│   ├── archive/              # ZIP and DMG packaging helpers
+│   ├── build/                # Workspace detection and xcodebuild helpers
 │   ├── cli/                  # CLI commands using cobra
 │   ├── config/               # Configuration structs and loader
 │   ├── context/              # Shared execution context
 │   ├── env/                  # Environment variable handling
+│   ├── git/                  # Git version resolution
 │   ├── github/               # GitHub API client + interface
 │   ├── pipe/                 # Pipe interface and registry
 │   ├── pipeline/             # Pipeline execution engine
@@ -33,17 +36,17 @@ macreleaser/
 │
 ├── internal/                 # Private implementation
 │   └── pipe/                 # Individual pipe implementations
-│       ├── archive/          # Archive configuration validation
-│       ├── build/            # Build configuration validation
-│       ├── homebrew/         # Homebrew configuration validation
-│       ├── notarize/         # Notarization configuration validation
-│       ├── project/          # Project configuration validation
-│       ├── release/          # Release configuration validation
-│       └── sign/             # Signing configuration validation
+│       ├── archive/          # Archive validation (CheckPipe) + packaging (Pipe)
+│       ├── build/            # Build validation (CheckPipe) + xcodebuild execution (Pipe)
+│       ├── homebrew/         # Homebrew configuration validation (CheckPipe)
+│       ├── notarize/         # Notarization configuration validation (CheckPipe)
+│       ├── project/          # Project configuration validation (CheckPipe)
+│       ├── release/          # Release configuration validation (CheckPipe)
+│       └── sign/             # Signing configuration validation (CheckPipe)
 │
 └── docs/                     # Documentation
-│   ├── ARCHITECTURE.md       # This file
-│   ├── PLAN.md               # Implementation plan
+    ├── ARCHITECTURE.md       # This file
+    ├── PLAN.md               # Implementation plan
     └── PRD.md                # Product requirements document
 ```
 
@@ -76,57 +79,72 @@ Shared state passed to all pipes. Contains configuration, logger, and any state 
 
 ```go
 type Context struct {
-    Config *config.Config    // Parsed configuration
-    Logger *logrus.Logger    // Logger for output
+    Config    *config.Config    // Parsed configuration
+    Logger    *logrus.Logger    // Logger for output
+    Version   string            // Derived from git tag
+    Artifacts *Artifacts        // Populated by execution pipes
 }
 ```
 
 **Guidelines:**
 - Keep context minimal - only add fields that multiple pipes need
-- Don't use context for pipe-to-pipe communication (pipes should be independent)
-- Context is read-only after creation (except for logging)
+- `Config` is read-only after creation
+- `Artifacts` is the **intentional exception** to the read-only rule: execution pipes write to it (e.g., the build pipe sets `AppPath`, the archive pipe reads it). This is necessary because execution pipes form a chain where each step produces outputs consumed by the next. Validation pipes must **never** write to `Artifacts`.
+- Don't use context for communication between validation pipes (validation pipes should be independent)
 
 ### 3. Pipeline
 
-Executes all registered pipes in sequence. Handles error propagation and skip logic.
+Executes registered pipes in two stages: validation then execution. Handles error propagation and skip logic.
 
 **Location**: `pkg/pipeline/pipeline.go`
 
 ```go
-func Run(ctx *context.Context) error {
-    for _, p := range pipe.All {
-        ctx.Logger.Infof("Running: %s", p.String())
-        if err := p.Run(ctx); err != nil {
-            if isSkip(err) {
-                ctx.Logger.Infof("Skipping: %v", err)
-                continue
-            }
-            return fmt.Errorf("%s: %w", p.String(), err)
-        }
+// RunValidation executes only validation pipes (used by check command).
+func RunValidation(ctx *context.Context) error {
+    return runPipes(ctx, pipe.ValidationPipes)
+}
+
+// RunAll executes validation pipes first, then execution pipes.
+// Used by build, release, and snapshot commands.
+func RunAll(ctx *context.Context) error {
+    if err := RunValidation(ctx); err != nil {
+        return err
     }
-    return nil
+    return RunExecution(ctx)
 }
 ```
 
 ### 4. Pipe Registry
 
-Central registry of all pipes in execution order.
+Central registry of all pipes, split into validation and execution stages.
 
 **Location**: `pkg/pipe/registry.go`
 
 ```go
-var All = []Piper{
-    project.Pipe{},   // First: validate project config
-    build.Pipe{},     // Then: validate build config
-    sign.Pipe{},      // Then: validate signing config
+// ValidationPipes run first to check configuration.
+var ValidationPipes = []Piper{
+    project.CheckPipe{},  // Validate project config
+    build.CheckPipe{},    // Validate build config
+    sign.CheckPipe{},     // Validate signing config
     // ... etc
+}
+
+// ExecutionPipes run after validation succeeds.
+var ExecutionPipes = []Piper{
+    build.Pipe{},   // Build and archive with xcodebuild
+    archive.Pipe{}, // Package into zip/dmg
 }
 ```
 
-**To add a new pipe:**
-1. Create pipe implementation in `internal/pipe/<name>/pipe.go`
-2. Add to `pkg/pipe/registry.go` in the appropriate order
-3. Import the package in `registry.go`
+Each pipe package may contain both a `CheckPipe` (validation) and a `Pipe` (execution). Packages that only perform validation (e.g., `sign`, `notarize`) have only a `CheckPipe`.
+
+**To add a new validation pipe:**
+1. Create `CheckPipe` in `internal/pipe/<name>/check.go`
+2. Add to `ValidationPipes` in `pkg/pipe/registry.go`
+
+**To add a new execution pipe:**
+1. Create `Pipe` in `internal/pipe/<name>/pipe.go`
+2. Add to `ExecutionPipes` in `pkg/pipe/registry.go` in the appropriate order
 
 ## Design Patterns
 
@@ -151,9 +169,10 @@ Pass dependencies explicitly rather than using global state:
 // Good: Dependencies passed explicitly
 func runCheck(cmd *cobra.Command, args []string) {
     logger := SetupLogger(GetDebugMode())
-    ctx := context.New(cfg, logger)
-    if err := pipeline.Run(ctx); err != nil {
-        ExitWithError(logger, "Validation failed: %v", err)
+    cfg, err := config.LoadConfig(GetConfigPath())
+    ctx := macContext.NewContext(context.Background(), cfg, logger)
+    if err := pipeline.RunValidation(ctx); err != nil {
+        ExitWithErrorf(logger, "Configuration validation failed: %v", err)
     }
 }
 ```
@@ -224,27 +243,69 @@ The `pkg/pipe/registry.go` file imports pipe implementations from `internal/pipe
 ```go
 // pkg/pipe/registry.go
 import (
-    // Standard library
-    
-    // Public packages
-    
     // Private implementations (exception to dependency flow)
     "github.com/macreleaser/macreleaser/internal/pipe/archive"
     "github.com/macreleaser/macreleaser/internal/pipe/build"
-    // ... etc
+    "github.com/macreleaser/macreleaser/internal/pipe/homebrew"
+    "github.com/macreleaser/macreleaser/internal/pipe/notarize"
+    "github.com/macreleaser/macreleaser/internal/pipe/project"
+    "github.com/macreleaser/macreleaser/internal/pipe/release"
+    "github.com/macreleaser/macreleaser/internal/pipe/sign"
 )
 ```
 
 ## Adding New Pipes
 
-### Step 1: Create the Pipe Package
+### Adding a Validation Pipe
+
+#### Step 1: Create the check file
 
 ```bash
 mkdir -p internal/pipe/<name>
+touch internal/pipe/<name>/check.go
+```
+
+#### Step 2: Implement CheckPipe
+
+```go
+package <name>
+
+import (
+    "github.com/macreleaser/macreleaser/pkg/context"
+    "github.com/macreleaser/macreleaser/pkg/validate"
+)
+
+type CheckPipe struct{}
+
+func (CheckPipe) String() string { return "validating <name> configuration" }
+
+func (CheckPipe) Run(ctx *context.Context) error {
+    cfg := ctx.Config.<Section>
+
+    if err := validate.RequiredString(cfg.SomeField, "<section>.<field>"); err != nil {
+        return err
+    }
+
+    ctx.Logger.Debug("<Name> configuration validated successfully")
+    return nil
+}
+```
+
+#### Step 3: Register in ValidationPipes
+
+In `pkg/pipe/registry.go`, add to `ValidationPipes`.
+
+#### Step 4: Add tests in `internal/pipe/<name>/check_test.go`
+
+### Adding an Execution Pipe
+
+#### Step 1: Create the pipe file
+
+```bash
 touch internal/pipe/<name>/pipe.go
 ```
 
-### Step 2: Implement the Pipe
+#### Step 2: Implement Pipe
 
 ```go
 package <name>
@@ -256,47 +317,22 @@ import (
 
 type Pipe struct{}
 
-func (Pipe) String() string { 
-    return "<description of what this pipe does>" 
-}
+func (Pipe) String() string { return "<action description>" }
 
 func (Pipe) Run(ctx *context.Context) error {
-    // Access config via ctx.Config
-    cfg := ctx.Config.<Section>
-    
-    // Validate or execute
-    if cfg.SomeField == "" {
-        return fmt.Errorf("<section>.<field> is required")
-    }
-    
-    // Log progress
-    ctx.Logger.Debug("<action> completed successfully")
-    
+    // Read from ctx.Config and ctx.Artifacts
+    // Perform work (build, package, sign, etc.)
+    // Write results to ctx.Artifacts
+    ctx.Artifacts.SomeField = result
     return nil
 }
 ```
 
-### Step 3: Register the Pipe
+#### Step 3: Register in ExecutionPipes
 
-In `pkg/pipe/registry.go`:
+In `pkg/pipe/registry.go`, add to `ExecutionPipes` in the appropriate order.
 
-```go
-import (
-    // ... existing imports
-    "github.com/macreleaser/macreleaser/internal/pipe/<name>"
-)
-
-var All = []Piper{
-    // ... existing pipes
-    <name>.Pipe{},  // Add in appropriate order
-}
-```
-
-### Step 4: Add Tests
-
-```bash
-touch internal/pipe/<name>/pipe_test.go
-```
+#### Step 4: Add tests in `internal/pipe/<name>/pipe_test.go`
 
 ## Configuration Handling
 
@@ -319,7 +355,7 @@ notarize:
 
 ### Configuration Validation
 
-Validation happens in pipes, not during config loading:
+Validation happens in `CheckPipe` structs, not during config loading:
 
 ```go
 // config.go - Just loads, doesn't validate
@@ -328,8 +364,8 @@ func LoadConfig(path string) (*Config, error) {
     // Return Config struct
 }
 
-// internal/pipe/build/pipe.go - Validates
-func (Pipe) Run(ctx *context.Context) error {
+// internal/pipe/build/check.go - Validates
+func (CheckPipe) Run(ctx *context.Context) error {
     if ctx.Config.Build.Configuration == "" {
         return fmt.Errorf("build.configuration is required")
     }
@@ -344,7 +380,7 @@ func (Pipe) Run(ctx *context.Context) error {
 Each pipe should have comprehensive unit tests:
 
 ```go
-func TestPipe(t *testing.T) {
+func TestCheckPipe(t *testing.T) {
     tests := []struct {
         name    string
         config  *config.Config
@@ -352,12 +388,11 @@ func TestPipe(t *testing.T) {
     }{
         // Test cases
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            ctx := context.New(tt.config, logrus.New())
-            pipe := Pipe{}
-            err := pipe.Run(ctx)
+            ctx := context.NewContext(context.Background(), tt.config, logrus.New())
+            err := CheckPipe{}.Run(ctx)
             // Assert
         })
     }
@@ -373,9 +408,9 @@ func TestPipeline(t *testing.T) {
     cfg := &config.Config{
         // Valid test config
     }
-    ctx := context.New(cfg, logrus.New())
-    
-    err := pipeline.Run(ctx)
+    ctx := context.NewContext(context.Background(), cfg, logrus.New())
+
+    err := pipeline.RunAll(ctx)
     if err != nil {
         t.Errorf("Pipeline failed: %v", err)
     }
@@ -433,13 +468,11 @@ return fmt.Errorf("invalid config")
 - Keep comments current with code changes
 
 ```go
-// Pipe validates build configuration and ensures required fields are set.
-type Pipe struct{}
+// CheckPipe validates build configuration and ensures required fields are set.
+type CheckPipe struct{}
 
-// Run executes the validation and returns an error if the configuration is invalid.
-func (Pipe) Run(ctx *context.Context) error {
-    // ...
-}
+// Pipe executes the Xcode build, producing an .xcarchive and extracting the .app.
+type Pipe struct{}
 ```
 
 ## Common Pitfalls

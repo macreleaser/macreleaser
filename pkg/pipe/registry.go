@@ -10,13 +10,21 @@ import (
 	"github.com/macreleaser/macreleaser/internal/pipe/sign"
 )
 
-// All contains all registered pipes in execution order
-var All = []Piper{
-	project.Pipe{},  // Validate project config
-	build.Pipe{},    // Validate build config
-	sign.Pipe{},     // Validate signing config
-	notarize.Pipe{}, // Validate notarization config
-	archive.Pipe{},  // Validate archive config
-	release.Pipe{},  // Validate release config
-	homebrew.Pipe{}, // Validate homebrew config
+// ValidationPipes contains all validation pipes, run by check and as the
+// first stage of build/release/snapshot.
+var ValidationPipes = []Piper{
+	project.CheckPipe{},  // Validate project config
+	build.CheckPipe{},    // Validate build config
+	sign.CheckPipe{},     // Validate signing config
+	notarize.CheckPipe{}, // Validate notarization config
+	archive.CheckPipe{},  // Validate archive config
+	release.CheckPipe{},  // Validate release config
+	homebrew.CheckPipe{}, // Validate homebrew config
+}
+
+// ExecutionPipes contains all execution pipes, run after validation
+// succeeds in build/release/snapshot commands.
+var ExecutionPipes = []Piper{
+	build.Pipe{},   // Build and archive with xcodebuild
+	archive.Pipe{}, // Package into zip/dmg
 }

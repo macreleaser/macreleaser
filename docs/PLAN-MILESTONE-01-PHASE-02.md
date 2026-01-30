@@ -25,11 +25,11 @@ Phase 2 delivers the first real build pipeline: run a single-arch Xcode build, l
 
 Phase 1 pipes are validation-only. Phase 2 introduces execution pipes that produce artifacts. To avoid naming conflicts:
 
-- **Rename existing validation pipes** from `build.Pipe{}`, `archive.Pipe{}`, etc. to `buildcheck.Pipe{}`, `archivecheck.Pipe{}`, etc. under `internal/pipe/<name>check/`
-- **Reclaim the original names** (`build.Pipe{}`, `archive.Pipe{}`) for the new execution pipes under `internal/pipe/build/` and `internal/pipe/archive/`
+- **Rename existing validation pipe structs** from `Pipe` to `CheckPipe` within the same package (e.g., `build.Pipe{}` → `build.CheckPipe{}` in `internal/pipe/build/check.go`)
+- **Reclaim `Pipe`** for the new execution pipes (e.g., `build.Pipe{}` in `internal/pipe/build/pipe.go`)
 - **Split the pipe registry** into two ordered slices:
-  - `ValidationPipes` — all renamed `*check` pipes (run by `check`, and as the first stage of `build`/`release`/`snapshot`)
-  - `ExecutionPipes` — new execution pipes (run after validation succeeds)
+  - `ValidationPipes` — all `CheckPipe` structs (run by `check`, and as the first stage of `build`/`release`/`snapshot`)
+  - `ExecutionPipes` — new `Pipe` structs (run after validation succeeds)
 - The `Piper` interface remains unchanged (`String()` + `Run()`)
 
 ### Runtime State: Artifacts Struct
@@ -111,22 +111,22 @@ Config fields map to `xcodebuild archive` flags:
 
 ### Task 2.0: Rename Validation Pipes
 **Subtasks:**
-2.0.1 Rename existing validation pipes:
-- `internal/pipe/build/` → `internal/pipe/buildcheck/` (struct becomes `buildcheck.Pipe{}`)
-- `internal/pipe/archive/` → `internal/pipe/archivecheck/` (struct becomes `archivecheck.Pipe{}`)
-- Rename all other Phase 1 validation pipes similarly: `projectcheck`, `signcheck`, `notarizecheck`, `releasecheck`, `homebrewcheck`
+2.0.1 Rename existing validation pipe structs from `Pipe` to `CheckPipe` within the same package:
+- `build.Pipe{}` → `build.CheckPipe{}` (moved to `internal/pipe/build/check.go`)
+- `archive.Pipe{}` → `archive.CheckPipe{}` (moved to `internal/pipe/archive/check.go`)
+- Same for all Phase 1 validation pipes: `project`, `sign`, `notarize`, `release`, `homebrew`
 
 2.0.2 Split `pkg/pipe/registry.go`:
 - Replace `All` with two slices: `ValidationPipes` and `ExecutionPipes`
-- `ValidationPipes` contains all renamed `*check` pipes
+- `ValidationPipes` contains all `CheckPipe` structs
 - `ExecutionPipes` is initially empty, populated in later tasks
 
 2.0.3 Update `pkg/pipeline/pipeline.go`:
-- Add ability to run validation pipes, then execution pipes, as separate stages
-- `check` command runs `ValidationPipes` only
-- `build`/`release`/`snapshot` run both stages
+- Add `RunValidation`, `RunExecution`, `RunAll` functions
+- `check` command calls `RunValidation` only
+- `build`/`release`/`snapshot` call `RunAll`
 
-2.0.4 Update all existing tests referencing old pipe names
+2.0.4 Update all existing tests referencing old pipe struct names
 
 ### Task 2.1: Version Resolution
 **Subtasks:**

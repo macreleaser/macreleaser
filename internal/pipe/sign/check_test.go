@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/macreleaser/macreleaser/pkg/config"
-	ctx "github.com/macreleaser/macreleaser/pkg/context"
+	macCtx "github.com/macreleaser/macreleaser/pkg/context"
 	"github.com/sirupsen/logrus"
 )
 
-func TestPipe(t *testing.T) {
+func TestCheckPipe(t *testing.T) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)
 
@@ -52,8 +52,8 @@ func TestPipe(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := ctx.NewContext(context.Background(), tt.config, logger)
-			err := Pipe{}.Run(ctx)
+			ctx := macCtx.NewContext(context.Background(), tt.config, logger)
+			err := CheckPipe{}.Run(ctx)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Run() error = %v, wantErr %v", err, tt.wantErr)
@@ -69,8 +69,8 @@ func TestPipe(t *testing.T) {
 	}
 }
 
-func TestPipeString(t *testing.T) {
-	p := Pipe{}
+func TestCheckPipeString(t *testing.T) {
+	p := CheckPipe{}
 	expected := "validating signing configuration"
 	if got := p.String(); got != expected {
 		t.Errorf("String() = %q, want %q", got, expected)

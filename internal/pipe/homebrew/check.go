@@ -6,12 +6,12 @@ import (
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
-// Pipe validates homebrew configuration
-type Pipe struct{}
+// CheckPipe validates homebrew configuration
+type CheckPipe struct{}
 
-func (Pipe) String() string { return "validating homebrew configuration" }
+func (CheckPipe) String() string { return "validating homebrew configuration" }
 
-func (Pipe) Run(ctx *context.Context) error {
+func (CheckPipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config.Homebrew
 
 	if err := validate.RequiredString(cfg.Cask.Name, "homebrew.cask.name"); err != nil {

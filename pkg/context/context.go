@@ -7,11 +7,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Artifacts holds runtime output state populated by execution pipes.
+// Subsequent pipes consume this data to chain build → archive → package steps.
+type Artifacts struct {
+	BuildOutputDir string   // dist/<project>/<version>/
+	ArchivePath    string   // path to .xcarchive
+	AppPath        string   // path to extracted .app
+	Packages       []string // paths to .zip, .dmg outputs
+}
+
 // Context provides shared state for all pipes
 type Context struct {
-	StdCtx context.Context // Standard context for cancellation support
-	Config *config.Config
-	Logger *logrus.Logger
+	StdCtx    context.Context // Standard context for cancellation support
+	Config    *config.Config
+	Logger    *logrus.Logger
+	Version   string     // derived from git tag
+	Artifacts *Artifacts // populated by execution pipes
 }
 
 // NewContext creates a new context with the given standard context, config, and logger.
@@ -21,9 +32,10 @@ func NewContext(stdCtx context.Context, cfg *config.Config, logger *logrus.Logge
 		stdCtx = context.Background()
 	}
 	return &Context{
-		StdCtx: stdCtx,
-		Config: cfg,
-		Logger: logger,
+		StdCtx:    stdCtx,
+		Config:    cfg,
+		Logger:    logger,
+		Artifacts: &Artifacts{},
 	}
 }
 

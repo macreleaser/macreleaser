@@ -10,10 +10,9 @@ var releaseCmd = &cobra.Command{
 	Short: "Full release process including Homebrew",
 	Long: `Run the complete release process.
 This will build, sign, notarize, and release your application to GitHub,
-and update Homebrew casks. (Coming in later phases)`,
+and update Homebrew casks. Signing, notarization, and upload are not yet
+enabled — currently this runs the same pipeline as build.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := SetupLogger(GetDebugMode())
-		logger.Info("Release command is not yet implemented")
-		logger.Info("This will be available in later phases of macreleaser")
+		runPipelineCommand("Release", requireGitVersion)
 	},
 }

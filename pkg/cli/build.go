@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"github.com/macreleaser/macreleaser/pkg/git"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -9,11 +11,19 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build and archive project",
 	Long: `Build and archive the Xcode project.
-This command will build your project using xcodebuild and create archives 
-for the specified architectures. (Coming in Phase 2)`,
+This command validates configuration, builds with xcodebuild, extracts
+the .app from the archive, and packages it into the configured formats.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger := SetupLogger(GetDebugMode())
-		logger.Info("Build command is not yet implemented")
-		logger.Info("This will be available in Phase 2 of macreleaser")
+		runPipelineCommand("Build", requireGitVersion)
 	},
+}
+
+// requireGitVersion resolves the version from git tags, exiting on failure.
+func requireGitVersion(logger *logrus.Logger) string {
+	version, err := git.ResolveVersion()
+	if err != nil {
+		ExitWithErrorf(logger, "Failed to resolve version: %v", err)
+	}
+	logger.Infof("Version: %s", version)
+	return version
 }

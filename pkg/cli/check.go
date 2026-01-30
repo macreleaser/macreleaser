@@ -14,7 +14,7 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "Validate configuration file",
 	Long: `Validate the .macreleaser.yaml configuration file.
-This command checks for syntax errors, required fields, and validates 
+This command checks for syntax errors, required fields, and validates
 the configuration against expected patterns and constraints.`,
 	Run: runCheck,
 }
@@ -35,8 +35,8 @@ func runCheck(cmd *cobra.Command, args []string) {
 	// Create context
 	ctx := macContext.NewContext(context.Background(), cfg, logger)
 
-	// Run validation pipeline
-	if err := pipeline.Run(ctx); err != nil {
+	// Run validation pipeline only
+	if err := pipeline.RunValidation(ctx); err != nil {
 		ExitWithErrorf(logger, "Configuration validation failed: %v", err)
 	}
 
