@@ -17,6 +17,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: `project.workspace`, multiple architectures, custom archive options, Homebrew integration
 
 #### Phase 2: Basic Build with One Arch, One Config
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-02.md)**
 - xcodebuild integration for single target
 - Archive creation for current machine architecture only
 - Basic DMG/ZIP packaging with defaults

@@ -9,7 +9,9 @@
 - ✅ Validation system
 - ✅ GitHub API client setup
 
-**Phase 2-6** (To be planned): Building, code signing, notarization, releases, Homebrew integration
+**Phase 2** (Planned): Basic build, archive, and packaging pipeline
+
+**Phase 3-6** (To be planned): Code signing, notarization, releases, Homebrew integration
 
 ## Milestone 2: CI/CD
 
