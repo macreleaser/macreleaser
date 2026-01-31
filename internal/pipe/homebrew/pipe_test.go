@@ -123,7 +123,7 @@ func TestPipeGenerateCaskAndCommitToTap(t *testing.T) {
 
 	mock := github.NewMockClient()
 	// Simulate 404 — cask file doesn't exist yet
-	mock.ContentsError = fmt.Errorf("file Casks/testapp.rb not found in tapowner/homebrew-tap: 404 Not Found")
+	mock.ContentsError = &github.NotFoundError{Message: "file Casks/testapp.rb not found in tapowner/homebrew-tap"}
 	ctx.HomebrewClient = mock
 
 	err := Pipe{}.Run(ctx)
@@ -233,6 +233,33 @@ func TestPipeNoTapConfigured(t *testing.T) {
 	}
 }
 
+func TestPipeCaskTokenPathTraversal(t *testing.T) {
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{"path separator", "../../../tmp/evil"},
+		{"backslash", "..\\evil"},
+		{"dot-dot", "foo..bar.."},
+		{"nested path", "sub/dir"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, _ := newTestContext(t)
+			ctx.Config.Homebrew.Cask.Name = tt.token
+
+			err := Pipe{}.Run(ctx)
+			if err == nil {
+				t.Fatal("Run() expected error for path traversal in cask name, got nil")
+			}
+			if !strings.Contains(err.Error(), "invalid cask name") {
+				t.Errorf("Run() error = %q, want error containing %q", err.Error(), "invalid cask name")
+			}
+		})
+	}
+}
+
 func TestPipeCommitToTapError(t *testing.T) {
 	ctx, _ := newTestContext(t)
 
@@ -243,8 +270,8 @@ func TestPipeCommitToTapError(t *testing.T) {
 	}
 
 	mock := github.NewMockClient()
-	// ContentsError returns 404 to trigger CreateFile path
-	mock.ContentsError = fmt.Errorf("404 Not Found")
+	// ContentsError returns not-found to trigger CreateFile path
+	mock.ContentsError = &github.NotFoundError{Message: "not found"}
 	// ErrorToReturn will cause CreateFile to fail
 	mock.SetError(fmt.Errorf("permission denied"))
 	ctx.HomebrewClient = mock

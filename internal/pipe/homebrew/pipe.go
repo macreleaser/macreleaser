@@ -67,6 +67,11 @@ func (Pipe) Run(ctx *context.Context) error {
 		License:  ctx.Config.Homebrew.Cask.License,
 	}
 
+	// Validate cask token doesn't contain path traversal sequences
+	if strings.ContainsAny(data.Token, "/\\") || strings.Contains(data.Token, "..") {
+		return fmt.Errorf("invalid cask name %q: must not contain path separators or '..'", data.Token)
+	}
+
 	caskContent, err := homebrew.RenderCask(data)
 	if err != nil {
 		return err
@@ -74,7 +79,7 @@ func (Pipe) Run(ctx *context.Context) error {
 
 	// Write local cask file
 	localPath := filepath.Join(ctx.Artifacts.BuildOutputDir, data.Token+".rb")
-	if err := os.WriteFile(localPath, []byte(caskContent), 0644); err != nil {
+	if err := os.WriteFile(localPath, []byte(caskContent), 0600); err != nil {
 		return fmt.Errorf("failed to write cask file: %w", err)
 	}
 	ctx.Artifacts.HomebrewCaskPath = localPath
@@ -116,7 +121,7 @@ func commitToTap(ctx *context.Context, data homebrew.CaskData, caskContent strin
 			return fmt.Errorf("failed to commit cask to tap %s/%s: %w", tapOwner, tapName, err)
 		}
 		ctx.Logger.Infof("Updated cask in %s/%s: %s", tapOwner, tapName, caskPath)
-	} else if strings.Contains(err.Error(), "404") {
+	} else if gh.IsNotFound(err) {
 		// File doesn't exist — create it
 		message := fmt.Sprintf("Add %s %s", data.Token, data.Version)
 		if err := ctx.HomebrewClient.CreateFile(ctx.StdCtx, tapOwner, tapName, caskPath, message, content); err != nil {

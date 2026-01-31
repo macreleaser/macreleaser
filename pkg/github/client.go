@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,6 +12,25 @@ import (
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
+
+// NotFoundError represents a resource not found condition.
+// Used by the mock client and checked by IsNotFound.
+type NotFoundError struct {
+	Message string
+}
+
+func (e *NotFoundError) Error() string { return e.Message }
+
+// IsNotFound returns true if the error represents a GitHub 404 Not Found response.
+// It checks for both the real go-github ErrorResponse and the mock NotFoundError.
+func IsNotFound(err error) bool {
+	var ghErr *github.ErrorResponse
+	if errors.As(err, &ghErr) {
+		return ghErr.Response != nil && ghErr.Response.StatusCode == http.StatusNotFound
+	}
+	var nfe *NotFoundError
+	return errors.As(err, &nfe)
+}
 
 // ClientInterface defines the GitHub client contract
 type ClientInterface interface {

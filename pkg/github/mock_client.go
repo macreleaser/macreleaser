@@ -43,8 +43,8 @@ func (m *MockClient) GetRepository(ctx context.Context, owner, repo string) (*gi
 	}
 
 	key := fmt.Sprintf("%s/%s", owner, repo)
-	if repo, exists := m.Repositories[key]; exists {
-		return repo, nil
+	if r, exists := m.Repositories[key]; exists {
+		return r, nil
 	}
 
 	return nil, fmt.Errorf("repository %s not found", key)
@@ -217,7 +217,7 @@ func (m *MockClient) GetFileContents(ctx context.Context, owner, repo, path stri
 	key := fmt.Sprintf("%s/%s/%s", owner, repo, path)
 	content, exists := m.FileContents[key]
 	if !exists {
-		return nil, fmt.Errorf("file %s not found in %s/%s: 404 Not Found", path, owner, repo)
+		return nil, &NotFoundError{Message: fmt.Sprintf("file %s not found in %s/%s", path, owner, repo)}
 	}
 	return content, nil
 }

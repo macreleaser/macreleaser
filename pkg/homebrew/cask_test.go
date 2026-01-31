@@ -88,6 +88,149 @@ func TestRenderCaskWithoutLicense(t *testing.T) {
 	}
 }
 
+func TestRenderCaskRejectsDoubleQuotes(t *testing.T) {
+	base := CaskData{
+		Token:    "myapp",
+		Version:  "1.0.0",
+		SHA256:   "abc123",
+		URL:      "https://example.com/myapp.zip",
+		Name:     "MyApp",
+		Desc:     "An app",
+		Homepage: "https://example.com",
+		AppName:  "MyApp.app",
+	}
+
+	fields := []struct {
+		name   string
+		inject func(CaskData) CaskData
+	}{
+		{"desc", func(d CaskData) CaskData { d.Desc = `injection" + system("id") + "`; return d }},
+		{"name", func(d CaskData) CaskData { d.Name = `My"App`; return d }},
+		{"token", func(d CaskData) CaskData { d.Token = `my"app`; return d }},
+		{"homepage", func(d CaskData) CaskData { d.Homepage = `https://example.com"bad`; return d }},
+		{"license", func(d CaskData) CaskData { d.License = `mit"`; return d }},
+	}
+
+	for _, tt := range fields {
+		t.Run(tt.name, func(t *testing.T) {
+			data := tt.inject(base)
+			_, err := RenderCask(data)
+			if err == nil {
+				t.Fatalf("RenderCask() expected error for double quote in %s, got nil", tt.name)
+			}
+			if !strings.Contains(err.Error(), "must not contain") {
+				t.Errorf("RenderCask() error = %q, want error about double quotes", err.Error())
+			}
+		})
+	}
+}
+
+func TestRenderCaskRejectsNewlines(t *testing.T) {
+	data := CaskData{
+		Token:    "myapp",
+		Version:  "1.0.0",
+		SHA256:   "abc123",
+		URL:      "https://example.com/myapp.zip",
+		Name:     "MyApp",
+		Desc:     "An app\nend\nrequire 'net/http'",
+		Homepage: "https://example.com",
+		AppName:  "MyApp.app",
+	}
+
+	_, err := RenderCask(data)
+	if err == nil {
+		t.Fatal("RenderCask() expected error for newline in desc, got nil")
+	}
+	if !strings.Contains(err.Error(), "must not contain") {
+		t.Errorf("RenderCask() error = %q, want error about newlines", err.Error())
+	}
+}
+
+func TestRenderCaskRejectsBackslashes(t *testing.T) {
+	base := CaskData{
+		Token:    "myapp",
+		Version:  "1.0.0",
+		SHA256:   "abc123",
+		URL:      "https://example.com/myapp.zip",
+		Name:     "MyApp",
+		Desc:     "An app",
+		Homepage: "https://example.com",
+		AppName:  "MyApp.app",
+	}
+
+	fields := []struct {
+		name   string
+		inject func(CaskData) CaskData
+	}{
+		{"desc backslash escape", func(d CaskData) CaskData {
+			d.Desc = `test\";system('id');#`
+			return d
+		}},
+		{"name backslash", func(d CaskData) CaskData { d.Name = `My\App`; return d }},
+		{"url backslash", func(d CaskData) CaskData {
+			d.URL = `https://example.com/\";system('id');#`
+			return d
+		}},
+	}
+
+	for _, tt := range fields {
+		t.Run(tt.name, func(t *testing.T) {
+			data := tt.inject(base)
+			_, err := RenderCask(data)
+			if err == nil {
+				t.Fatalf("RenderCask() expected error for backslash in %s, got nil", tt.name)
+			}
+			if !strings.Contains(err.Error(), "must not contain") {
+				t.Errorf("RenderCask() error = %q, want error about backslashes", err.Error())
+			}
+		})
+	}
+}
+
+func TestRenderCaskRejectsRubyInterpolation(t *testing.T) {
+	base := CaskData{
+		Token:    "myapp",
+		Version:  "1.0.0",
+		SHA256:   "abc123",
+		URL:      "https://example.com/myapp.zip",
+		Name:     "MyApp",
+		Desc:     "An app",
+		Homepage: "https://example.com",
+		AppName:  "MyApp.app",
+	}
+
+	fields := []struct {
+		name   string
+		inject func(CaskData) CaskData
+	}{
+		{"desc interpolation", func(d CaskData) CaskData {
+			d.Desc = "Great app#{system('touch /tmp/pwned')}"
+			return d
+		}},
+		{"name interpolation", func(d CaskData) CaskData {
+			d.Name = "App#{exit}"
+			return d
+		}},
+		{"url interpolation", func(d CaskData) CaskData {
+			d.URL = "https://example.com/#{`id`}"
+			return d
+		}},
+	}
+
+	for _, tt := range fields {
+		t.Run(tt.name, func(t *testing.T) {
+			data := tt.inject(base)
+			_, err := RenderCask(data)
+			if err == nil {
+				t.Fatalf("RenderCask() expected error for Ruby interpolation in %s, got nil", tt.name)
+			}
+			if !strings.Contains(err.Error(), "must not contain") {
+				t.Errorf("RenderCask() error = %q, want error about interpolation", err.Error())
+			}
+		})
+	}
+}
+
 func TestBuildAssetURL(t *testing.T) {
 	tests := []struct {
 		owner, repo, tag, filename string

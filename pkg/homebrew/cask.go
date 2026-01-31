@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -37,8 +38,37 @@ const caskTemplate = `cask "{{.Token}}" do
 end
 `
 
+// validateCaskField checks that a string value is safe for embedding in a
+// Homebrew cask Ruby file. Double quotes, backslashes, and newlines would
+// break Ruby string literals. Ruby interpolation (#{}) inside double-quoted
+// strings executes arbitrary code at parse time.
+func validateCaskField(name, value string) error {
+	if strings.ContainsAny(value, "\"\n\r\\") {
+		return fmt.Errorf("invalid %s: must not contain double quotes, backslashes, or newlines", name)
+	}
+	if strings.Contains(value, "#{") {
+		return fmt.Errorf("invalid %s: must not contain Ruby interpolation sequences", name)
+	}
+	return nil
+}
+
 // RenderCask renders a Homebrew cask Ruby file from the given data.
 func RenderCask(data CaskData) (string, error) {
+	fields := map[string]string{
+		"token":    data.Token,
+		"version":  data.Version,
+		"url":      data.URL,
+		"name":     data.Name,
+		"desc":     data.Desc,
+		"homepage": data.Homepage,
+		"app_name": data.AppName,
+		"license":  data.License,
+	}
+	for name, value := range fields {
+		if err := validateCaskField(name, value); err != nil {
+			return "", err
+		}
+	}
 	tmpl, err := template.New("cask").Parse(caskTemplate)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse cask template: %w", err)
