@@ -30,7 +30,17 @@
 - ✅ Actionable error messages for common failures (identity not found, codesign missing, extended attributes)
 - ✅ Unit tests for argument construction and identity validation (pure functions, no system deps)
 
-**Phase 4-6** (To be planned): Notarization, releases, Homebrew integration
+**Phase 4** (Complete): Basic notarization
+- ✅ Hardened Runtime support (`--options runtime`) in `RunCodesign`, auto-enabled when notarization is configured
+- ✅ `notarytool submit --wait` integration with Apple ID authentication (`pkg/notarize/notarytool.go`)
+- ✅ Ticket stapling via `xcrun stapler staple` (`pkg/notarize/staple.go`)
+- ✅ Gatekeeper verification via `spctl --assess --type execute` (`pkg/notarize/spctl.go`)
+- ✅ Notarize execution pipe: temp ZIP → submit → staple → verify → cleanup (`internal/pipe/notarize/pipe.go`)
+- ✅ Pipeline order: build → sign (Hardened Runtime) → notarize → archive
+- ✅ Actionable error messages for auth failures, rejection, missing tickets, Gatekeeper rejection
+- ✅ Unit tests for argument construction, submission ID parsing, and pipe guard conditions
+
+**Phase 5-6** (To be planned): Releases, Homebrew integration
 
 ## Milestone 2: CI/CD
 

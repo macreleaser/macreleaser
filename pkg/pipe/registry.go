@@ -25,7 +25,8 @@ var ValidationPipes = []Piper{
 // ExecutionPipes contains all execution pipes, run after validation
 // succeeds in build/release/snapshot commands.
 var ExecutionPipes = []Piper{
-	build.Pipe{},   // Build and archive with xcodebuild
-	sign.Pipe{},    // Code sign the .app bundle
-	archive.Pipe{}, // Package into zip/dmg
+	build.Pipe{},      // Build and archive with xcodebuild
+	sign.Pipe{},       // Code sign with Hardened Runtime
+	notarize.Pipe{},   // Submit, wait, staple .app
+	archive.Pipe{},    // Package stapled .app into zip/dmg
 }

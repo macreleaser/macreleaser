@@ -7,13 +7,19 @@ import (
 )
 
 // RunCodesign signs the app bundle at appPath with the given identity
-// using --deep --force flags. Returns combined output and any error.
-func RunCodesign(identity, appPath string) (string, error) {
+// using --deep --force flags. When hardenedRuntime is true, --options runtime
+// is included (required for notarization). Returns combined output and any error.
+func RunCodesign(identity, appPath string, hardenedRuntime bool) (string, error) {
 	if _, err := exec.LookPath("codesign"); err != nil {
 		return "", fmt.Errorf("codesign not found — install Xcode Command Line Tools with: xcode-select --install")
 	}
 
-	cmd := exec.Command("codesign", "--deep", "--force", "--sign", identity, appPath)
+	args := []string{"--deep", "--force"}
+	if hardenedRuntime {
+		args = append(args, "--options", "runtime")
+	}
+	args = append(args, "--sign", identity, appPath)
+	cmd := exec.Command("codesign", args...)
 
 	out, err := cmd.CombinedOutput()
 	output := string(out)

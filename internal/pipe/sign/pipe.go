@@ -25,9 +25,15 @@ func (Pipe) Run(ctx *context.Context) error {
 		return fmt.Errorf("identity validation failed: %w", err)
 	}
 
+	// Enable Hardened Runtime when notarization is configured (Apple requires it)
+	hardenedRuntime := ctx.Config.Notarize.AppleID != ""
+	if hardenedRuntime {
+		ctx.Logger.Info("Hardened Runtime enabled (required for notarization)")
+	}
+
 	// Sign the .app bundle in-place
 	ctx.Logger.Infof("Signing %s", ctx.Artifacts.AppPath)
-	output, err := sign.RunCodesign(identity, ctx.Artifacts.AppPath)
+	output, err := sign.RunCodesign(identity, ctx.Artifacts.AppPath, hardenedRuntime)
 	if err != nil {
 		ctx.Logger.Debug(output)
 		return fmt.Errorf("signing failed: %w", err)
