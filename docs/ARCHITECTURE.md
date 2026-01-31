@@ -30,24 +30,29 @@ macreleaser/
 │   ├── env/                  # Environment variable handling
 │   ├── git/                  # Git version resolution
 │   ├── github/               # GitHub API client + interface
+│   ├── homebrew/             # Homebrew cask rendering and SHA256
+│   ├── notarize/             # Apple notarization (notarytool, staple, spctl)
 │   ├── pipe/                 # Pipe interface and registry
 │   ├── pipeline/             # Pipeline execution engine
+│   ├── sign/                 # Code signing (codesign, identity validation)
+│   ├── validate/             # Configuration validation helpers
 │   └── version/              # Version information
 │
 ├── internal/                 # Private implementation
 │   └── pipe/                 # Individual pipe implementations
-│       ├── archive/          # Archive validation (CheckPipe) + packaging (Pipe)
+│       ├── archive/          # Archive validation (CheckPipe) + ZIP/DMG packaging (Pipe)
 │       ├── build/            # Build validation (CheckPipe) + xcodebuild execution (Pipe)
-│       ├── homebrew/         # Homebrew configuration validation (CheckPipe)
-│       ├── notarize/         # Notarization configuration validation (CheckPipe)
-│       ├── project/          # Project configuration validation (CheckPipe)
-│       ├── release/          # Release configuration validation (CheckPipe)
-│       └── sign/             # Signing configuration validation (CheckPipe)
+│       ├── homebrew/         # Homebrew validation (CheckPipe) + cask generation and tap commit (Pipe)
+│       ├── notarize/         # Notarization validation (CheckPipe) + submit, staple, verify (Pipe)
+│       ├── project/          # Project configuration validation (CheckPipe only)
+│       ├── release/          # Release validation (CheckPipe) + GitHub release and asset upload (Pipe)
+│       └── sign/             # Signing validation (CheckPipe) + codesign with Hardened Runtime (Pipe)
 │
 └── docs/                     # Documentation
     ├── ARCHITECTURE.md       # This file
     ├── PLAN.md               # Implementation plan
-    └── PRD.md                # Product requirements document
+    ├── PRD.md                # Product requirements document
+    └── STATE.md              # Current implementation state
 ```
 
 ## Key Components
@@ -79,10 +84,14 @@ Shared state passed to all pipes. Contains configuration, logger, and any state 
 
 ```go
 type Context struct {
-    Config    *config.Config    // Parsed configuration
-    Logger    *logrus.Logger    // Logger for output
-    Version   string            // Derived from git tag
-    Artifacts *Artifacts        // Populated by execution pipes
+    StdCtx         context.Context        // Standard context for cancellation support
+    Config         *config.Config         // Parsed configuration
+    Logger         *logrus.Logger         // Logger for output
+    Version        string                 // Derived from git tag
+    Artifacts      *Artifacts             // Populated by execution pipes
+    SkipPublish    bool                   // When true, release and homebrew pipes skip publishing
+    GitHubClient   github.ClientInterface // Injectable GitHub API client
+    HomebrewClient github.ClientInterface // Injectable GitHub client for tap operations
 }
 ```
 
@@ -91,6 +100,7 @@ type Context struct {
 - `Config` is read-only after creation
 - `Artifacts` is the **intentional exception** to the read-only rule: execution pipes write to it (e.g., the build pipe sets `AppPath`, the archive pipe reads it). This is necessary because execution pipes form a chain where each step produces outputs consumed by the next. Validation pipes must **never** write to `Artifacts`.
 - Don't use context for communication between validation pipes (validation pipes should be independent)
+- Injectable clients (`GitHubClient`, `HomebrewClient`) enable testing without real API calls. The homebrew client is separate because tap operations may use a different token than release operations.
 
 ### 3. Pipeline
 
@@ -126,17 +136,24 @@ var ValidationPipes = []Piper{
     project.CheckPipe{},  // Validate project config
     build.CheckPipe{},    // Validate build config
     sign.CheckPipe{},     // Validate signing config
-    // ... etc
+    notarize.CheckPipe{}, // Validate notarization config
+    archive.CheckPipe{},  // Validate archive config
+    release.CheckPipe{},  // Validate release config
+    homebrew.CheckPipe{}, // Validate homebrew config
 }
 
 // ExecutionPipes run after validation succeeds.
 var ExecutionPipes = []Piper{
-    build.Pipe{},   // Build and archive with xcodebuild
-    archive.Pipe{}, // Package into zip/dmg
+    build.Pipe{},      // Build and archive with xcodebuild
+    sign.Pipe{},       // Code sign with Hardened Runtime
+    notarize.Pipe{},   // Submit, wait, staple .app
+    archive.Pipe{},    // Package stapled .app into zip/dmg
+    release.Pipe{},    // Create GitHub release and upload assets
+    homebrew.Pipe{},   // Generate cask and commit to tap
 }
 ```
 
-Each pipe package may contain both a `CheckPipe` (validation) and a `Pipe` (execution). Packages that only perform validation (e.g., `sign`, `notarize`) have only a `CheckPipe`.
+Each pipe package may contain both a `CheckPipe` (validation) and a `Pipe` (execution). Only `project` has a `CheckPipe` without a corresponding execution `Pipe`.
 
 **To add a new validation pipe:**
 1. Create `CheckPipe` in `internal/pipe/<name>/check.go`

@@ -83,7 +83,7 @@ Notes:
 - `macreleaser init` - Generate example configuration
 - `macreleaser check` - Validate configuration file
 - `macreleaser build` - Build, archive, and package project
-- `macreleaser release` - Full release process (signing, notarization, and upload coming soon)
+- `macreleaser release` - Full release process (build, sign, notarize, archive, GitHub release, Homebrew cask)
 - `macreleaser snapshot` - Test build with snapshot version (falls back to timestamp if no git tags)
 
 ## Requirements
@@ -106,4 +106,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Roadmap
 
-See [`.opencode/plans/`](.opencode/plans/) for detailed implementation plans and milestones.
+See [`docs/PLAN.md`](docs/PLAN.md) for detailed implementation plans and milestones.
