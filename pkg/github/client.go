@@ -21,6 +21,9 @@ type ClientInterface interface {
 	GetAuthenticatedUser(ctx context.Context) (*github.User, error)
 	ForkRepository(ctx context.Context, owner, repo string) (*github.Repository, error)
 	CreatePullRequest(ctx context.Context, owner, repo string, pr *github.NewPullRequest) (*github.PullRequest, error)
+	GetFileContents(ctx context.Context, owner, repo, path string) (*github.RepositoryContent, error)
+	CreateFile(ctx context.Context, owner, repo, path, message string, content []byte) error
+	UpdateFile(ctx context.Context, owner, repo, path, message string, content []byte, sha string) error
 }
 
 // Ensure Client implements ClientInterface
@@ -178,4 +181,41 @@ func (c *Client) CreatePullRequest(ctx context.Context, owner, repo string, pr *
 		return nil, fmt.Errorf("failed to create pull request in %s/%s: %w", owner, repo, err)
 	}
 	return newPR, nil
+}
+
+// GetFileContents retrieves the contents of a file in a repository
+func (c *Client) GetFileContents(ctx context.Context, owner, repo, path string) (*github.RepositoryContent, error) {
+	content, _, _, err := c.client.Repositories.GetContents(ctx, owner, repo, path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get contents of %s in %s/%s: %w", path, owner, repo, err)
+	}
+	return content, nil
+}
+
+// CreateFile creates a new file in a repository via the Contents API
+func (c *Client) CreateFile(ctx context.Context, owner, repo, path, message string, content []byte) error {
+	opts := &github.RepositoryContentFileOptions{
+		Message: &message,
+		Content: content,
+	}
+	_, _, err := c.client.Repositories.CreateFile(ctx, owner, repo, path, opts)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s in %s/%s: %w", path, owner, repo, err)
+	}
+	return nil
+}
+
+// UpdateFile updates an existing file in a repository via the Contents API.
+// The sha parameter is the blob SHA of the file being replaced.
+func (c *Client) UpdateFile(ctx context.Context, owner, repo, path, message string, content []byte, sha string) error {
+	opts := &github.RepositoryContentFileOptions{
+		Message: &message,
+		Content: content,
+		SHA:     &sha,
+	}
+	_, _, err := c.client.Repositories.UpdateFile(ctx, owner, repo, path, opts)
+	if err != nil {
+		return fmt.Errorf("failed to update file %s in %s/%s: %w", path, owner, repo, err)
+	}
+	return nil
 }

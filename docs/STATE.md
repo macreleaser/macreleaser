@@ -52,7 +52,21 @@
 - ✅ Pipeline order: build → sign → notarize → archive → release
 - ✅ Unit tests for content type helper, pipe guards, skip behavior, and mock client interactions
 
-**Phase 6** (To be planned): Homebrew integration
+**Phase 6** (Complete): Homebrew cask generation and custom tap support
+- ✅ SHA256 hash computation for archive packages (`pkg/homebrew/sha256.go`)
+- ✅ Cask template rendering via Go `text/template` (`pkg/homebrew/cask.go`)
+- ✅ Package selection: prefer `.zip`, fall back to `.dmg`
+- ✅ Asset download URL construction from release config, version, and filename
+- ✅ Version `v` prefix stripped for cask version stanza
+- ✅ GitHub Contents API: `GetFileContents`, `CreateFile`, `UpdateFile` on `ClientInterface`
+- ✅ Idempotent tap commits: create new cask or update existing (uses SHA for conflict detection)
+- ✅ Separate `HomebrewClient` on context for tap authentication (may differ from `GITHUB_TOKEN`)
+- ✅ Local cask file always generated in build output directory
+- ✅ Homebrew execution pipe: hash → render → write local → commit to tap (`internal/pipe/homebrew/pipe.go`)
+- ✅ Respects `SkipPublish` flag: `build`/`snapshot` skip entirely
+- ✅ Cask path printed in artifact summary
+- ✅ Pipeline order: build → sign → notarize → archive → release → homebrew
+- ✅ Unit tests for SHA256, cask rendering, package selection, URL building, and pipe behavior
 
 ## Milestone 2: CI/CD
 

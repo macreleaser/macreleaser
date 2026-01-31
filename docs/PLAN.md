@@ -25,6 +25,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Parallel builds, custom archive styling
 
 #### Phase 3: Basic Code Signing
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-03.md)**
 - Developer ID certificate handling from keychain
 - codesign integration with identity from config
 - Basic signature verification
@@ -32,6 +33,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Multiple certificates, custom signing options
 
 #### Phase 4: Basic Notarization
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-04.md)**
 - notarytool integration with Apple ID auth
 - Upload and basic polling workflow
 - Ticket stapling to archive
@@ -39,6 +41,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Custom retry logic, advanced notarization options
 
 #### Phase 5: Basic Release to GitHub
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-05.md)**
 - GitHub releases API integration
 - Asset upload (single archive)
 - Basic version tagging from git
@@ -46,6 +49,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Changelog generation, draft releases, multiple assets
 
 #### Phase 6: Basic Cask Generation and Custom Tap Support Only
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-06.md)**
 - Cask generation from release info
 - Custom tap direct commits (write permissions)
 - Basic SHA256 hash calculation

@@ -16,8 +16,12 @@ type MockClient struct {
 	Releases      map[string][]*github.RepositoryRelease
 	Users         map[string]*github.User
 	UploadedAssets []string // tracks asset paths passed to UploadReleaseAsset
-	ErrorToReturn error
-	UploadError   error // if non-nil, returned by UploadReleaseAsset instead of ErrorToReturn
+	FileContents   map[string]*github.RepositoryContent // key: "owner/repo/path"
+	CreatedFiles   map[string][]byte                    // key: "owner/repo/path", value: content
+	UpdatedFiles   map[string][]byte                    // key: "owner/repo/path", value: content
+	ErrorToReturn  error
+	UploadError    error // if non-nil, returned by UploadReleaseAsset instead of ErrorToReturn
+	ContentsError  error // if non-nil, returned by GetFileContents instead of ErrorToReturn
 }
 
 // NewMockClient creates a new mock GitHub client
@@ -26,6 +30,9 @@ func NewMockClient() *MockClient {
 		Repositories: make(map[string]*github.Repository),
 		Releases:     make(map[string][]*github.RepositoryRelease),
 		Users:        make(map[string]*github.User),
+		FileContents: make(map[string]*github.RepositoryContent),
+		CreatedFiles: make(map[string][]byte),
+		UpdatedFiles: make(map[string][]byte),
 	}
 }
 
@@ -196,4 +203,49 @@ func (m *MockClient) AddRelease(owner, repo string, release *github.RepositoryRe
 // AddUser adds a user to mock data
 func (m *MockClient) AddUser(user *github.User) {
 	m.Users[user.GetLogin()] = user
+}
+
+// GetFileContents retrieves file contents from mock data
+func (m *MockClient) GetFileContents(ctx context.Context, owner, repo, path string) (*github.RepositoryContent, error) {
+	if m.ContentsError != nil {
+		return nil, m.ContentsError
+	}
+	if m.ErrorToReturn != nil {
+		return nil, m.ErrorToReturn
+	}
+
+	key := fmt.Sprintf("%s/%s/%s", owner, repo, path)
+	content, exists := m.FileContents[key]
+	if !exists {
+		return nil, fmt.Errorf("file %s not found in %s/%s: 404 Not Found", path, owner, repo)
+	}
+	return content, nil
+}
+
+// CreateFile simulates creating a file in a repository
+func (m *MockClient) CreateFile(ctx context.Context, owner, repo, path, message string, content []byte) error {
+	if m.ErrorToReturn != nil {
+		return m.ErrorToReturn
+	}
+
+	key := fmt.Sprintf("%s/%s/%s", owner, repo, path)
+	m.CreatedFiles[key] = content
+	return nil
+}
+
+// UpdateFile simulates updating a file in a repository
+func (m *MockClient) UpdateFile(ctx context.Context, owner, repo, path, message string, content []byte, sha string) error {
+	if m.ErrorToReturn != nil {
+		return m.ErrorToReturn
+	}
+
+	key := fmt.Sprintf("%s/%s/%s", owner, repo, path)
+	m.UpdatedFiles[key] = content
+	return nil
+}
+
+// AddFileContent adds file content to mock data for GetFileContents
+func (m *MockClient) AddFileContent(owner, repo, path string, content *github.RepositoryContent) {
+	key := fmt.Sprintf("%s/%s/%s", owner, repo, path)
+	m.FileContents[key] = content
 }

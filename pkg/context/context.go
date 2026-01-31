@@ -14,8 +14,9 @@ type Artifacts struct {
 	BuildOutputDir string   // dist/<project>/<version>/
 	ArchivePath    string   // path to .xcarchive
 	AppPath        string   // path to extracted .app
-	Packages       []string // paths to .zip, .dmg outputs
-	ReleaseURL     string   // HTML URL of the created GitHub release
+	Packages         []string // paths to .zip, .dmg outputs
+	ReleaseURL       string   // HTML URL of the created GitHub release
+	HomebrewCaskPath string   // local path to the generated cask .rb file
 }
 
 // Context provides shared state for all pipes
@@ -25,8 +26,9 @@ type Context struct {
 	Logger    *logrus.Logger
 	Version      string              // derived from git tag
 	Artifacts    *Artifacts          // populated by execution pipes
-	SkipPublish  bool                // when true, release pipe skips publishing
-	GitHubClient github.ClientInterface // injectable GitHub API client
+	SkipPublish    bool                    // when true, release pipe skips publishing
+	GitHubClient   github.ClientInterface // injectable GitHub API client
+	HomebrewClient github.ClientInterface // injectable GitHub client for tap operations
 }
 
 // NewContext creates a new context with the given standard context, config, and logger.

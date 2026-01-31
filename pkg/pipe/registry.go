@@ -30,4 +30,5 @@ var ExecutionPipes = []Piper{
 	notarize.Pipe{},   // Submit, wait, staple .app
 	archive.Pipe{},    // Package stapled .app into zip/dmg
 	release.Pipe{},    // Create GitHub release and upload assets
+	homebrew.Pipe{},   // Generate cask and commit to tap
 }

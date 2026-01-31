@@ -99,6 +99,10 @@ func printArtifactSummary(ctx *macContext.Context) {
 		ctx.Logger.Infof("  Release: %s", ctx.Artifacts.ReleaseURL)
 	}
 
+	if ctx.Artifacts.HomebrewCaskPath != "" {
+		ctx.Logger.Infof("  Cask: %s", ctx.Artifacts.HomebrewCaskPath)
+	}
+
 	fmt.Println()
 	ctx.Logger.Infof("Artifacts in: %s", ctx.Artifacts.BuildOutputDir)
 }
