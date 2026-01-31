@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/macreleaser/macreleaser/pkg/config"
+	"github.com/macreleaser/macreleaser/pkg/github"
 	"github.com/sirupsen/logrus"
 )
 
@@ -14,6 +15,7 @@ type Artifacts struct {
 	ArchivePath    string   // path to .xcarchive
 	AppPath        string   // path to extracted .app
 	Packages       []string // paths to .zip, .dmg outputs
+	ReleaseURL     string   // HTML URL of the created GitHub release
 }
 
 // Context provides shared state for all pipes
@@ -21,8 +23,10 @@ type Context struct {
 	StdCtx    context.Context // Standard context for cancellation support
 	Config    *config.Config
 	Logger    *logrus.Logger
-	Version   string     // derived from git tag
-	Artifacts *Artifacts // populated by execution pipes
+	Version      string              // derived from git tag
+	Artifacts    *Artifacts          // populated by execution pipes
+	SkipPublish  bool                // when true, release pipe skips publishing
+	GitHubClient github.ClientInterface // injectable GitHub API client
 }
 
 // NewContext creates a new context with the given standard context, config, and logger.

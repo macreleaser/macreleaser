@@ -15,7 +15,9 @@ type MockClient struct {
 	Repositories  map[string]*github.Repository
 	Releases      map[string][]*github.RepositoryRelease
 	Users         map[string]*github.User
+	UploadedAssets []string // tracks asset paths passed to UploadReleaseAsset
 	ErrorToReturn error
+	UploadError   error // if non-nil, returned by UploadReleaseAsset instead of ErrorToReturn
 }
 
 // NewMockClient creates a new mock GitHub client
@@ -88,18 +90,31 @@ func (m *MockClient) CreateRelease(ctx context.Context, owner, repo string, rele
 		m.Releases[key] = []*github.RepositoryRelease{}
 	}
 
+	// Assign synthetic ID and URL for testing
+	id := int64(len(m.Releases[key]) + 1)
+	release.ID = &id
+	htmlURL := fmt.Sprintf("https://github.com/%s/releases/tag/%s", key, release.GetTagName())
+	release.HTMLURL = &htmlURL
+
 	m.Releases[key] = append(m.Releases[key], release)
 	return release, nil
 }
 
-// UploadReleaseAsset simulates uploading an asset to a release
+// UploadReleaseAsset simulates uploading an asset to a release.
+// If UploadError is set, it is returned instead of ErrorToReturn.
 func (m *MockClient) UploadReleaseAsset(ctx context.Context, owner, repo string, releaseID int64, assetPath, contentType string) (*github.ReleaseAsset, error) {
+	if m.UploadError != nil {
+		return nil, m.UploadError
+	}
 	if m.ErrorToReturn != nil {
 		return nil, m.ErrorToReturn
 	}
 
+	m.UploadedAssets = append(m.UploadedAssets, assetPath)
+
+	name := assetPath
 	asset := &github.ReleaseAsset{
-		Name: &assetPath,
+		Name: &name,
 	}
 
 	return asset, nil

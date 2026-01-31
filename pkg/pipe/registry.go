@@ -29,4 +29,5 @@ var ExecutionPipes = []Piper{
 	sign.Pipe{},       // Code sign with Hardened Runtime
 	notarize.Pipe{},   // Submit, wait, staple .app
 	archive.Pipe{},    // Package stapled .app into zip/dmg
+	release.Pipe{},    // Create GitHub release and upload assets
 }

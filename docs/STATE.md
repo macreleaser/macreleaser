@@ -40,7 +40,19 @@
 - ✅ Actionable error messages for auth failures, rejection, missing tickets, Gatekeeper rejection
 - ✅ Unit tests for argument construction, submission ID parsing, and pipe guard conditions
 
-**Phase 5-6** (To be planned): Releases, Homebrew integration
+**Phase 5** (Complete): Basic release to GitHub
+- ✅ Release execution pipe: create GitHub release and upload archive assets (`internal/pipe/release/pipe.go`)
+- ✅ `SkipPublish` context flag: `build` and `snapshot` skip publishing; only `release` creates a GitHub release
+- ✅ `GitHubClient` on context for dependency injection and shared client across pipes
+- ✅ Pipeline options: variadic `pipelineOption` pattern for `runPipelineCommand` (`pkg/cli/shared.go`)
+- ✅ Content type detection for `.zip` and `.dmg` assets (`pkg/github/release.go`)
+- ✅ Non-regular file filtering: `.app` directories in Packages skipped with warning
+- ✅ Actionable error messages: missing token, release already exists, upload failure
+- ✅ Release URL in artifact summary and `ctx.Artifacts.ReleaseURL` for downstream pipes
+- ✅ Pipeline order: build → sign → notarize → archive → release
+- ✅ Unit tests for content type helper, pipe guards, skip behavior, and mock client interactions
+
+**Phase 6** (To be planned): Homebrew integration
 
 ## Milestone 2: CI/CD
 

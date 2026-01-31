@@ -43,9 +43,20 @@ func ExitWithErrorNoLoggerf(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
+// pipelineOption configures the pipeline context before execution.
+type pipelineOption func(*macContext.Context)
+
+// withSkipPublish returns an option that sets SkipPublish on the context,
+// preventing the release pipe from creating a GitHub release.
+func withSkipPublish() pipelineOption {
+	return func(ctx *macContext.Context) {
+		ctx.SkipPublish = true
+	}
+}
+
 // runPipelineCommand is the shared implementation for build, release, and snapshot.
 // resolveVersion returns the version string to use; commandName appears in error messages.
-func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) string) {
+func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) string, opts ...pipelineOption) {
 	logger := SetupLogger(GetDebugMode())
 	configPath := GetConfigPath()
 
@@ -60,6 +71,9 @@ func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) 
 
 	ctx := macContext.NewContext(context.Background(), cfg, logger)
 	ctx.Version = version
+	for _, opt := range opts {
+		opt(ctx)
+	}
 
 	if err := pipeline.RunAll(ctx); err != nil {
 		ExitWithErrorf(logger, "%s failed: %v", commandName, err)
@@ -79,6 +93,10 @@ func printArtifactSummary(ctx *macContext.Context) {
 
 	for _, pkg := range ctx.Artifacts.Packages {
 		ctx.Logger.Infof("  Package: %s", pkg)
+	}
+
+	if ctx.Artifacts.ReleaseURL != "" {
+		ctx.Logger.Infof("  Release: %s", ctx.Artifacts.ReleaseURL)
 	}
 
 	fmt.Println()

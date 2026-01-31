@@ -17,7 +17,7 @@ var snapshotCmd = &cobra.Command{
 This allows you to test the release process without affecting
 versioned releases. If no git tags exist, a snapshot version is generated.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runPipelineCommand("Snapshot", snapshotVersion)
+		runPipelineCommand("Snapshot", snapshotVersion, withSkipPublish())
 	},
 }
 
