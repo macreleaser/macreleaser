@@ -26,5 +26,6 @@ var ValidationPipes = []Piper{
 // succeeds in build/release/snapshot commands.
 var ExecutionPipes = []Piper{
 	build.Pipe{},   // Build and archive with xcodebuild
+	sign.Pipe{},    // Code sign the .app bundle
 	archive.Pipe{}, // Package into zip/dmg
 }
