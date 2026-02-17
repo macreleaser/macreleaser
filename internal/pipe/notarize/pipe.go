@@ -11,12 +11,24 @@ import (
 	"github.com/macreleaser/macreleaser/pkg/notarize"
 )
 
+// skipError signals an intentional skip. It satisfies the pipe.IsSkip interface
+// checked by the pipeline runner, without importing pkg/pipe (which would cause
+// an import cycle through pkg/pipe/registry.go).
+type skipError string
+
+func (e skipError) Error() string { return string(e) }
+func (e skipError) IsSkip() bool  { return true }
+
 // Pipe executes Apple notarization on the signed .app bundle.
 type Pipe struct{}
 
 func (Pipe) String() string { return "notarizing application" }
 
 func (Pipe) Run(ctx *context.Context) error {
+	if ctx.SkipNotarize {
+		return skipError("notarization skipped via --skip-notarize")
+	}
+
 	if ctx.Artifacts.AppPath == "" {
 		return fmt.Errorf("no .app found to notarize — ensure the build and sign steps completed successfully")
 	}

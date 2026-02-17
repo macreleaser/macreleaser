@@ -11,6 +11,10 @@ type CheckPipe struct{}
 func (CheckPipe) String() string { return "validating notarization configuration" }
 
 func (CheckPipe) Run(ctx *context.Context) error {
+	if ctx.SkipNotarize {
+		return skipError("notarization skipped via --skip-notarize")
+	}
+
 	cfg := ctx.Config.Notarize
 
 	if err := validate.RequiredString(cfg.AppleID, "notarize.apple_id"); err != nil {

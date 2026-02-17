@@ -100,6 +100,24 @@ func TestCheckPipe(t *testing.T) {
 	}
 }
 
+func TestCheckPipeSkipNotarize(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
+	// Config with missing fields — would normally fail validation
+	ctx := macCtx.NewContext(context.Background(), &config.Config{}, logger)
+	ctx.SkipNotarize = true
+
+	err := CheckPipe{}.Run(ctx)
+	if err == nil {
+		t.Fatal("expected skipError, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "skipped") {
+		t.Errorf("error = %v, want containing 'skipped'", err)
+	}
+}
+
 func TestCheckPipeString(t *testing.T) {
 	p := CheckPipe{}
 	expected := "validating notarization configuration"

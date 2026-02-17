@@ -25,8 +25,8 @@ func (Pipe) Run(ctx *context.Context) error {
 		return fmt.Errorf("identity validation failed: %w", err)
 	}
 
-	// Enable Hardened Runtime when notarization is configured (Apple requires it)
-	hardenedRuntime := ctx.Config.Notarize.AppleID != ""
+	// Enable Hardened Runtime when notarization is configured and not skipped (Apple requires it)
+	hardenedRuntime := !ctx.SkipNotarize && ctx.Config.Notarize.AppleID != ""
 	if hardenedRuntime {
 		ctx.Logger.Info("Hardened Runtime enabled (required for notarization)")
 	}

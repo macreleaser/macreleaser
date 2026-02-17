@@ -18,6 +18,23 @@ func TestPipeString(t *testing.T) {
 	}
 }
 
+func TestPipeSkipNotarize(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
+	ctx := macCtx.NewContext(context.Background(), &config.Config{}, logger)
+	ctx.SkipNotarize = true
+
+	err := Pipe{}.Run(ctx)
+	if err == nil {
+		t.Fatal("expected skipError, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "skipped") {
+		t.Errorf("error = %v, want containing 'skipped'", err)
+	}
+}
+
 func TestPipeNoApp(t *testing.T) {
 	logger := logrus.New()
 	logger.SetLevel(logrus.DebugLevel)

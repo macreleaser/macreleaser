@@ -54,6 +54,14 @@ func withSkipPublish() pipelineOption {
 	}
 }
 
+// withSkipNotarize returns an option that sets SkipNotarize on the context,
+// skipping notarization and disabling hardened runtime during signing.
+func withSkipNotarize() pipelineOption {
+	return func(ctx *macContext.Context) {
+		ctx.SkipNotarize = true
+	}
+}
+
 // runPipelineCommand is the shared implementation for build, release, and snapshot.
 // resolveVersion returns the version string to use; commandName appears in error messages.
 func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) string, opts ...pipelineOption) {

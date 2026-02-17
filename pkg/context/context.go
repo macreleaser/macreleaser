@@ -27,6 +27,7 @@ type Context struct {
 	Version        string                 // derived from git tag
 	Artifacts      *Artifacts             // populated by execution pipes
 	SkipPublish    bool                   // when true, release pipe skips publishing
+	SkipNotarize   bool                   // when true, notarize pipe skips notarization
 	GitHubClient   github.ClientInterface // injectable GitHub API client
 	HomebrewClient github.ClientInterface // injectable GitHub client for tap operations
 }

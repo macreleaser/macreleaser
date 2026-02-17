@@ -14,7 +14,11 @@ var buildCmd = &cobra.Command{
 This command validates configuration, builds with xcodebuild, extracts
 the .app from the archive, and packages it into the configured formats.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runPipelineCommand("Build", requireGitVersion, withSkipPublish())
+		opts := []pipelineOption{withSkipPublish()}
+		if skip, _ := cmd.Flags().GetBool("skip-notarize"); skip {
+			opts = append(opts, withSkipNotarize())
+		}
+		runPipelineCommand("Build", requireGitVersion, opts...)
 	},
 }
 

@@ -44,6 +44,10 @@ func registerCommands() {
 	rootCmd.AddCommand(buildCmd)
 	rootCmd.AddCommand(releaseCmd)
 	rootCmd.AddCommand(snapshotCmd)
+
+	// --skip-notarize is available on build and snapshot (not release)
+	buildCmd.Flags().Bool("skip-notarize", false, "skip notarization (for quick local pipeline validation)")
+	snapshotCmd.Flags().Bool("skip-notarize", false, "skip notarization (for quick local pipeline validation)")
 }
 
 // GetConfigPath returns the config file path from flags
