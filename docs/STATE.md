@@ -80,10 +80,11 @@
 
 ## Milestone 2: CI/CD
 
-**Phase 1** (Planned): GoReleaser configuration
-- Version package ldflags injection
-- `.goreleaser.yaml` for darwin/amd64 + darwin/arm64
-- Makefile dev build ldflags
+**Phase 1** (Complete): GoReleaser configuration
+- ✅ Version package `const` → `var` for `-ldflags -X` injection
+- ✅ `.goreleaser.yaml` with darwin/amd64 + darwin/arm64, changelog grouping
+- ✅ Makefile `build` target injects version/commit/date via ldflags
+- ✅ Verified with `goreleaser check` and `goreleaser build --snapshot --clean`
 
 **Phase 2** (Planned): CI workflow
 - GitHub Actions CI with lint, test, smoke-test jobs
