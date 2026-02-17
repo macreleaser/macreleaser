@@ -80,7 +80,19 @@
 
 ## Milestone 2: CI/CD
 
-**To be planned**
+**Phase 1** (Planned): GoReleaser configuration
+- Version package ldflags injection
+- `.goreleaser.yaml` for darwin/amd64 + darwin/arm64
+- Makefile dev build ldflags
+
+**Phase 2** (Planned): CI workflow
+- GitHub Actions CI with lint, test, smoke-test jobs
+- golangci-lint, go vet, go test on ubuntu-latest
+- macOS smoke test for binary verification
+
+**Phase 3** (Planned): Release workflow
+- Tag-triggered GoReleaser release
+- Homebrew tap formula auto-publish
 
 ## Milestone 3: Custom GitHub action
 

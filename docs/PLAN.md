@@ -66,10 +66,33 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Additional skip flags, config migration tooling
 
 ### Milestone 2: CI/CD
-- Use goreleaser to implement CI/CD for macreleaser itself
-- GitHub actions workflows to build, test, and release macreleaser
-- Basic integration testing with test Xcode project
-- **Out of Scope**: Custom GitHub action
+
+**Goal**: Automated testing, linting, and release pipeline for macreleaser itself using GoReleaser and GitHub Actions
+
+#### Phase 1: GoReleaser Configuration
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-01.md)**
+- Version package ldflags injection (const → var)
+- `.goreleaser.yaml` with darwin/amd64 + darwin/arm64 builds
+- Changelog generation, archive naming
+- Makefile dev build ldflags
+- **In Scope**: Local `goreleaser build --snapshot` verification
+- **Out of Scope**: GitHub Actions workflows, Homebrew tap formula
+
+#### Phase 2: CI Workflow
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-02.md)**
+- `.github/workflows/ci.yml` on push to main and PRs
+- Linting with golangci-lint, `go vet`, `go test`
+- macOS smoke test: build binary, run `init` + `check`
+- **In Scope**: Unit tests on ubuntu-latest, smoke test on macos-latest
+- **Out of Scope**: Full Xcode integration test, coverage reporting
+
+#### Phase 3: Release Workflow
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-03.md)**
+- `.github/workflows/release.yml` triggered on `v*` tag push
+- GoReleaser action for build + GitHub release
+- Homebrew formula published to `macreleaser/homebrew-tap`
+- **In Scope**: Cross-compiled darwin binaries, changelog, tap formula
+- **Out of Scope**: Binary signing/notarization, official Homebrew core
 
 ### Milestone 3: Custom GitHub action
 - GitHub action that wraps macreleaser (`action-macreleaser`)
