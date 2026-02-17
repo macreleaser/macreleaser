@@ -86,10 +86,11 @@
 - ✅ Makefile `build` target injects version/commit/date via ldflags
 - ✅ Verified with `goreleaser check` and `goreleaser build --snapshot --clean`
 
-**Phase 2** (Planned): CI workflow
-- GitHub Actions CI with lint, test, smoke-test jobs
-- golangci-lint, go vet, go test on ubuntu-latest
-- macOS smoke test for binary verification
+**Phase 2** (Complete): CI workflow
+- ✅ `.github/workflows/ci.yml` with lint, test, and smoke-test jobs
+- ✅ `.golangci.yml` with errcheck, govet, ineffassign, staticcheck, unused
+- ✅ Lint and test on ubuntu-latest; smoke-test on macos-latest
+- ✅ Existing lint issues fixed (unchecked error returns, proper noun nolint directives)
 
 **Phase 3** (Planned): Release workflow
 - Tag-triggered GoReleaser release
