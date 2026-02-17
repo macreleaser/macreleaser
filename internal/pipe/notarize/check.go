@@ -2,6 +2,7 @@ package notarize
 
 import (
 	"github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/env"
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
@@ -16,6 +17,16 @@ func (CheckPipe) Run(ctx *context.Context) error {
 	}
 
 	cfg := ctx.Config.Notarize
+
+	if err := env.CheckResolved(cfg.AppleID, "notarize.apple_id"); err != nil {
+		return err
+	}
+	if err := env.CheckResolved(cfg.TeamID, "notarize.team_id"); err != nil {
+		return err
+	}
+	if err := env.CheckResolved(cfg.Password, "notarize.password"); err != nil {
+		return err
+	}
 
 	if err := validate.RequiredString(cfg.AppleID, "notarize.apple_id"); err != nil {
 		return err

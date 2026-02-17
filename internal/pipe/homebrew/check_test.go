@@ -45,7 +45,7 @@ func TestCheckPipe(t *testing.T) {
 					Tap: config.TapConfig{
 						Owner: "user",
 						Name:  "homebrew-tap",
-						Token: "env(HOMEBREW_TAP_TOKEN)",
+						Token: "ghp_testtoken123",
 					},
 				},
 			},
@@ -122,7 +122,7 @@ func TestCheckPipe(t *testing.T) {
 					Tap: config.TapConfig{
 						Owner: "",
 						Name:  "homebrew-tap",
-						Token: "env(HOMEBREW_TAP_TOKEN)",
+						Token: "ghp_testtoken123",
 					},
 				},
 			},
@@ -141,7 +141,7 @@ func TestCheckPipe(t *testing.T) {
 					Tap: config.TapConfig{
 						Owner: "user",
 						Name:  "",
-						Token: "env(HOMEBREW_TAP_TOKEN)",
+						Token: "ghp_testtoken123",
 					},
 				},
 			},

@@ -26,7 +26,7 @@ func TestCheckPipe(t *testing.T) {
 				Notarize: config.NotarizeConfig{
 					AppleID:  "test@example.com",
 					TeamID:   "TEAM123",
-					Password: "env(APPLE_PASSWORD)",
+					Password: "xxxx-xxxx-xxxx-xxxx",
 				},
 			},
 			wantErr: false,
@@ -37,7 +37,7 @@ func TestCheckPipe(t *testing.T) {
 				Notarize: config.NotarizeConfig{
 					AppleID:  "",
 					TeamID:   "TEAM123",
-					Password: "env(APPLE_PASSWORD)",
+					Password: "xxxx-xxxx-xxxx-xxxx",
 				},
 			},
 			wantErr: true,
@@ -49,7 +49,7 @@ func TestCheckPipe(t *testing.T) {
 				Notarize: config.NotarizeConfig{
 					AppleID:  "test@example.com",
 					TeamID:   "",
-					Password: "env(APPLE_PASSWORD)",
+					Password: "xxxx-xxxx-xxxx-xxxx",
 				},
 			},
 			wantErr: true,

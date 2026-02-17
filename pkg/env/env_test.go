@@ -75,10 +75,10 @@ func TestSubstituteEnvVarsNode(t *testing.T) {
 			checkValue: "value1-value2",
 		},
 		{
-			name:      "non-existent env var",
-			yamlInput: "value: env(NONEXISTENT_RANDOM_VAR_12345)\n",
-			expectErr: true,
-			checkKey:  "value",
+			name:       "non-existent env var left as literal",
+			yamlInput:  "value: env(NONEXISTENT_RANDOM_VAR_12345)\n",
+			checkKey:   "value",
+			checkValue: "env(NONEXISTENT_RANDOM_VAR_12345)",
 		},
 		{
 			name:       "no env vars",
@@ -174,6 +174,67 @@ func TestSubstituteEnvVarsNode(t *testing.T) {
 			}
 			if valueStr != tt.checkValue {
 				t.Errorf("Expected %q, got %q", tt.checkValue, valueStr)
+			}
+		})
+	}
+}
+
+func TestCheckResolved(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   string
+		field   string
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name:    "resolved value",
+			value:   "some-actual-value",
+			field:   "test.field",
+			wantErr: false,
+		},
+		{
+			name:    "empty value",
+			value:   "",
+			field:   "test.field",
+			wantErr: false,
+		},
+		{
+			name:    "unresolved env var",
+			value:   "env(MISSING_VAR)",
+			field:   "notarize.password",
+			wantErr: true,
+			errMsg:  "notarize.password: environment variable MISSING_VAR is not set",
+		},
+		{
+			name:    "unresolved env var with prefix",
+			value:   "prefix-env(MISSING_VAR)-suffix",
+			field:   "homebrew.tap.token",
+			wantErr: true,
+			errMsg:  "homebrew.tap.token: environment variable MISSING_VAR is not set",
+		},
+		{
+			name:    "malformed pattern not matched",
+			value:   "env(MISSING_VAR",
+			field:   "test.field",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := CheckResolved(tt.value, tt.field)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if err.Error() != tt.errMsg {
+					t.Errorf("error = %q, want %q", err.Error(), tt.errMsg)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
 			}
 		})
 	}

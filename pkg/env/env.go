@@ -88,14 +88,25 @@ func substituteNode(node ast.Node, inValue bool) error {
 	}
 }
 
+// CheckResolved verifies that a config value contains no unresolved env(...)
+// references. Call this in CheckPipes after skip guards to produce clear errors
+// like: "notarize.password: environment variable APPLE_PASSWORD is not set".
+func CheckResolved(value, field string) error {
+	matches := envVarPattern.FindAllStringSubmatch(value, -1)
+	for _, m := range matches {
+		return fmt.Errorf("%s: environment variable %s is not set", field, m[1])
+	}
+	return nil
+}
+
 func replaceEnvVarsInString(input string) (string, error) {
 	var err error
 	result := envVarPattern.ReplaceAllStringFunc(input, func(match string) string {
 		key := strings.TrimSuffix(strings.TrimPrefix(match, "env("), ")")
 		value, ok := os.LookupEnv(key)
 		if !ok {
-			err = fmt.Errorf("environment variable %s is not set", key)
-			return ""
+			// Leave unresolved — CheckResolved will catch it later
+			return match
 		}
 
 		if disallowedControlChars.MatchString(value) {

@@ -2,6 +2,7 @@ package sign
 
 import (
 	"github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/env"
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
@@ -12,6 +13,10 @@ func (CheckPipe) String() string { return "validating signing configuration" }
 
 func (CheckPipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config.Sign
+
+	if err := env.CheckResolved(cfg.Identity, "sign.identity"); err != nil {
+		return err
+	}
 
 	if err := validate.RequiredString(cfg.Identity, "sign.identity"); err != nil {
 		return err

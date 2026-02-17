@@ -231,6 +231,55 @@ homebrew:
 	}
 }
 
+func TestTolerantEnvSubstitution(t *testing.T) {
+	// Verify that configs with unresolved env vars load successfully.
+	// CheckPipes (not LoadConfig) are responsible for catching unresolved vars.
+	yamlContent := `
+project:
+  name: "MyApp"
+  scheme: "MyApp"
+build:
+  configuration: "Release"
+sign:
+  identity: "env(UNSET_IDENTITY_VAR)"
+notarize:
+  apple_id: "env(UNSET_APPLE_ID)"
+  team_id: "env(UNSET_TEAM_ID)"
+  password: "env(UNSET_PASSWORD)"
+archive:
+  formats: ["dmg"]
+release:
+  github:
+    owner: "testowner"
+    repo: "testrepo"
+    draft: false
+homebrew:
+  cask:
+    name: "testapp"
+    desc: "Test application"
+    homepage: "https://example.com"
+    license: "MIT"
+`
+
+	tmpFile := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(tmpFile, []byte(yamlContent), 0644); err != nil {
+		t.Fatalf("Failed to create temporary config file: %v", err)
+	}
+
+	config, err := LoadConfig(tmpFile)
+	if err != nil {
+		t.Fatalf("LoadConfig should succeed with unresolved env vars, got: %v", err)
+	}
+
+	// Unresolved vars should be left as literals
+	if config.Sign.Identity != "env(UNSET_IDENTITY_VAR)" {
+		t.Errorf("Expected literal env(UNSET_IDENTITY_VAR), got %s", config.Sign.Identity)
+	}
+	if config.Notarize.Password != "env(UNSET_PASSWORD)" {
+		t.Errorf("Expected literal env(UNSET_PASSWORD), got %s", config.Notarize.Password)
+	}
+}
+
 func TestLoadConfigSecurity(t *testing.T) {
 	tests := []struct {
 		name          string

@@ -2,6 +2,7 @@ package project
 
 import (
 	"github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/env"
 	"github.com/macreleaser/macreleaser/pkg/validate"
 )
 
@@ -12,6 +13,13 @@ func (CheckPipe) String() string { return "validating project configuration" }
 
 func (CheckPipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config.Project
+
+	if err := env.CheckResolved(cfg.Name, "project.name"); err != nil {
+		return err
+	}
+	if err := env.CheckResolved(cfg.Scheme, "project.scheme"); err != nil {
+		return err
+	}
 
 	if err := validate.RequiredString(cfg.Name, "project.name"); err != nil {
 		return err
