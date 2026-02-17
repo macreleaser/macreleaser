@@ -69,7 +69,7 @@ func (Pipe) Run(ctx *context.Context) error {
 	output, err = notarize.RunAssess(ctx.Artifacts.AppPath)
 	if err != nil {
 		ctx.Logger.Debug(output)
-		return fmt.Errorf("Gatekeeper assessment failed: %w", err)
+		return fmt.Errorf("Gatekeeper assessment failed: %w", err) //nolint:staticcheck // proper noun
 	}
 	ctx.Logger.Debug(output)
 

@@ -20,7 +20,7 @@ func RunAssess(appPath string) (string, error) {
 
 	if err != nil {
 		if strings.Contains(output, "rejected") {
-			return output, fmt.Errorf("Gatekeeper rejected the app — it may not be properly signed or notarized")
+			return output, fmt.Errorf("Gatekeeper rejected the app — it may not be properly signed or notarized") //nolint:staticcheck // proper noun
 		}
 		return output, fmt.Errorf("spctl assess failed: %s: %w", output, err)
 	}

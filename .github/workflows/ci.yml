@@ -42,3 +42,9 @@ jobs:
       - run: ./macreleaser --version
       - run: ./macreleaser init
       - run: ./macreleaser check
+        env:
+          APPLE_ID: test@example.com
+          TEAM_ID: XXXXXXXXXX
+          APPLE_APP_SPECIFIC_PASSWORD: dummy
+          HOMEBREW_TAP_TOKEN: dummy
+          HOMEBREW_OFFICIAL_TOKEN: dummy

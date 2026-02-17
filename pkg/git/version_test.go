@@ -18,7 +18,7 @@ func TestResolveVersion(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(original)
+	defer func() { _ = os.Chdir(original) }()
 
 	version, err := ResolveVersion()
 	if err != nil {
@@ -39,7 +39,7 @@ func TestResolveVersionNoTags(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(original)
+	defer func() { _ = os.Chdir(original) }()
 
 	_, err = ResolveVersion()
 	if err == nil {
@@ -60,7 +60,7 @@ func TestResolveVersionLatestTag(t *testing.T) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Chdir(original)
+	defer func() { _ = os.Chdir(original) }()
 
 	// Add another commit and tag
 	writeFile(t, filepath.Join(dir, "file2.txt"), "content2")

@@ -43,7 +43,7 @@ func RunSubmit(zipPath, appleID, teamID, password string) (string, error) {
 			if submissionID != "" {
 				hint = fmt.Sprintf(" — run: xcrun notarytool log %s to view details", submissionID)
 			}
-			return output, fmt.Errorf("Apple rejected the submission%s", hint)
+			return output, fmt.Errorf("Apple rejected the submission%s", hint) //nolint:staticcheck // proper noun
 		}
 		return output, fmt.Errorf("notarytool submit failed: %s: %w", output, err)
 	}
