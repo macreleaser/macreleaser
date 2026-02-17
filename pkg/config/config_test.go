@@ -22,7 +22,7 @@ project:
   scheme: "MyApp"
 build:
   configuration: "Release"
-  architectures: ["arm64"]
+
 sign:
   identity: "[TEST_IDENTITY_PLACEHOLDER]"
 notarize:
@@ -52,7 +52,7 @@ project:
   name: "MyApp"
 build:
   configuration: "Release"
-  architectures: ["arm64"]
+
 `,
 			expectError: false,
 		},
@@ -114,7 +114,7 @@ func TestSaveConfig(t *testing.T) {
 		},
 		Build: BuildConfig{
 			Configuration: "Release",
-			Architectures: []string{"arm64"},
+
 		},
 		Sign: SignConfig{
 			Identity: "[TEST_IDENTITY_PLACEHOLDER]",
@@ -181,7 +181,7 @@ project:
   scheme: "MyApp"
 build:
   configuration: "Release"
-  architectures: ["arm64"]
+
 sign:
   identity: "env(TEST_IDENTITY)"
 notarize:

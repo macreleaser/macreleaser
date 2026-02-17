@@ -17,15 +17,6 @@ func (CheckPipe) Run(ctx *context.Context) error {
 		return err
 	}
 
-	if err := validate.RequiredSlice(cfg.Architectures, "build.architectures"); err != nil {
-		return err
-	}
-
-	validArchs := []string{"arm64", "x86_64", "Universal Binary"}
-	if err := validate.AllOneOf(cfg.Architectures, validArchs, "build.architectures"); err != nil {
-		return err
-	}
-
 	ctx.Logger.Debug("Build configuration validated successfully")
 	return nil
 }

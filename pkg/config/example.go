@@ -9,7 +9,6 @@ func ExampleConfig() *Config {
 		},
 		Build: BuildConfig{
 			Configuration: "Release",
-			Architectures: []string{"arm64", "x86_64"},
 		},
 		Sign: SignConfig{
 			Identity: "Developer ID Application: Your Name (TEAM_ID)",

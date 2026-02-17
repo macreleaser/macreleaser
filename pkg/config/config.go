@@ -31,8 +31,7 @@ type ProjectConfig struct {
 
 // BuildConfig contains build configuration
 type BuildConfig struct {
-	Configuration string   `yaml:"configuration"`
-	Architectures []string `yaml:"architectures"`
+	Configuration string `yaml:"configuration"`
 }
 
 // SignConfig contains code signing configuration
