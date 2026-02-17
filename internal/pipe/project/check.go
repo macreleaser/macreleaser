@@ -1,6 +1,9 @@
 package project
 
 import (
+	"fmt"
+	"path/filepath"
+
 	"github.com/macreleaser/macreleaser/pkg/context"
 	"github.com/macreleaser/macreleaser/pkg/env"
 	"github.com/macreleaser/macreleaser/pkg/validate"
@@ -23,6 +26,9 @@ func (CheckPipe) Run(ctx *context.Context) error {
 
 	if err := validate.RequiredString(cfg.Name, "project.name"); err != nil {
 		return err
+	}
+	if !filepath.IsLocal(cfg.Name) {
+		return fmt.Errorf("project.name contains a path traversal or absolute path: %q", cfg.Name)
 	}
 
 	if err := validate.RequiredString(cfg.Scheme, "project.scheme"); err != nil {

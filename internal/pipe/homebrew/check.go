@@ -1,6 +1,9 @@
 package homebrew
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/macreleaser/macreleaser/pkg/config"
 	"github.com/macreleaser/macreleaser/pkg/context"
 	"github.com/macreleaser/macreleaser/pkg/env"
@@ -31,6 +34,9 @@ func (CheckPipe) Run(ctx *context.Context) error {
 
 	if err := validate.RequiredString(cfg.Cask.Name, "homebrew.cask.name"); err != nil {
 		return err
+	}
+	if strings.ContainsAny(cfg.Cask.Name, "/\\") || strings.Contains(cfg.Cask.Name, "..") {
+		return fmt.Errorf("invalid cask name %q: must not contain path separators or '..'", cfg.Cask.Name)
 	}
 
 	if err := validate.RequiredString(cfg.Cask.Desc, "homebrew.cask.desc"); err != nil {
