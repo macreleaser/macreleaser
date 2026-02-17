@@ -31,6 +31,11 @@ func (Pipe) Run(ctx *context.Context) error {
 	outputDir := filepath.Join("dist", cfg.Project.Name, ctx.Version)
 	ctx.Artifacts.BuildOutputDir = outputDir
 
+	// Fail early if output directory already exists (stale build)
+	if _, err := os.Stat(outputDir); err == nil {
+		return fmt.Errorf("output directory %s already exists — remove it or use a different version", outputDir)
+	}
+
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return fmt.Errorf("failed to create output directory %s: %w", outputDir, err)
 	}

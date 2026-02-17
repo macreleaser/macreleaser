@@ -12,6 +12,45 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func TestPipeOutputDirExists(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.DebugLevel)
+
+	// Create a temporary directory structure with pre-existing output dir
+	dir := t.TempDir()
+	outputDir := filepath.Join(dir, "dist", "TestApp", "v1.0.0")
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Change to the temp directory so dist/ is found
+	origDir, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	cfg := &config.Config{
+		Project: config.ProjectConfig{
+			Name:   "TestApp",
+			Scheme: "TestApp",
+		},
+		Build: config.BuildConfig{
+			Configuration: "Release",
+		},
+	}
+	ctx := macCtx.NewContext(context.Background(), cfg, logger)
+	ctx.Version = "v1.0.0"
+
+	err := Pipe{}.Run(ctx)
+	if err == nil {
+		t.Fatal("expected error for pre-existing output directory, got nil")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error = %v, want containing 'already exists'", err)
+	}
+}
+
 func TestPipeString(t *testing.T) {
 	p := Pipe{}
 	expected := "building project"
