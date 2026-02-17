@@ -56,7 +56,16 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **In Scope**: Simple cask with version/URL/hash
 - **Out of Scope**: Official tap PRs, cask customization, dependency detection
 
-### Milestone 2: CI/CD 
+#### Phase 7: Pipeline Robustness
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-07.md)**
+- Tolerant env var resolution with deferred validation in CheckPipes
+- `--skip-notarize` flag for quick local pipeline validation
+- Output directory conflict detection
+- Removed unused `architectures` config field
+- **In Scope**: Skip guards, env.CheckResolved(), output dir checks
+- **Out of Scope**: Additional skip flags, config migration tooling
+
+### Milestone 2: CI/CD
 - Use goreleaser to implement CI/CD for macreleaser itself
 - GitHub actions workflows to build, test, and release macreleaser
 - Basic integration testing with test Xcode project

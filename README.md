@@ -39,7 +39,6 @@ make install
      scheme: "MyApp"
    build:
      configuration: "Release"
-     architectures: ["arm64", "x86_64"]
    sign:
      identity: "Developer ID Application: Your Name (TEAM_ID)"
    notarize:
@@ -75,7 +74,7 @@ notarize:
 
 Notes:
 - `env(...)` is only substituted in YAML values (not keys).
-- Unset variables cause a configuration error.
+- Unset variables are left as literals at config load time and validated when the corresponding pipe runs. This allows commands like `build --skip-notarize` to work without Apple credentials set.
 - Multiline values are allowed (for example, with literal blocks).
 
 ## Commands
@@ -83,8 +82,10 @@ Notes:
 - `macreleaser init` - Generate example configuration
 - `macreleaser check` - Validate configuration file
 - `macreleaser build` - Build, archive, and package project
+  - `--skip-notarize` - Skip notarization for quick local pipeline validation
 - `macreleaser release` - Full release process (build, sign, notarize, archive, GitHub release, Homebrew cask)
 - `macreleaser snapshot` - Test build with snapshot version (falls back to timestamp if no git tags)
+  - `--skip-notarize` - Skip notarization for quick local pipeline validation
 
 ## Requirements
 

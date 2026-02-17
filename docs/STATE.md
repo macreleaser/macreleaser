@@ -68,6 +68,16 @@
 - ✅ Pipeline order: build → sign → notarize → archive → release → homebrew
 - ✅ Unit tests for SHA256, cask rendering, package selection, URL building, and pipe behavior
 
+**Phase 7** (Complete): Pipeline robustness
+- ✅ Removed unused `build.architectures` config field (validated but never passed to xcodebuild)
+- ✅ Output directory conflict detection: fail early if `dist/<name>/<version>/` already exists
+- ✅ `--skip-notarize` flag on `build` and `snapshot` commands for quick local pipeline validation
+- ✅ `SkipNotarize` context field: skips notarize check/pipe, disables hardened runtime in sign pipe
+- ✅ Tolerant env var substitution: missing `env(VAR)` references left as literals instead of failing
+- ✅ `env.CheckResolved()` function for field-level validation of unresolved env vars in CheckPipes
+- ✅ Skip guards in CheckPipes: release and homebrew skip when `SkipPublish`, notarize skips when `SkipNotarize`
+- ✅ Enables `macreleaser build --skip-notarize` without Apple credentials or `HOMEBREW_TAP_TOKEN`
+
 ## Milestone 2: CI/CD
 
 **To be planned**

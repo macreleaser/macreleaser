@@ -90,6 +90,7 @@ type Context struct {
     Version        string                 // Derived from git tag
     Artifacts      *Artifacts             // Populated by execution pipes
     SkipPublish    bool                   // When true, release and homebrew pipes skip publishing
+    SkipNotarize   bool                   // When true, notarize pipe skips; sign disables hardened runtime
     GitHubClient   github.ClientInterface // Injectable GitHub API client
     HomebrewClient github.ClientInterface // Injectable GitHub client for tap operations
 }
@@ -365,10 +366,15 @@ notarize:
 
 **Implementation**: `pkg/env/env.go`
 
+**Tolerant Substitution**: `SubstituteEnvVarsNode()` resolves env vars that are set and leaves missing ones as literals (e.g., the string `"env(MISSING_VAR)"` is kept as-is). This allows config loading to succeed even when some env vars are not set — validation happens later in CheckPipes.
+
+**Deferred Validation**: `env.CheckResolved(value, field string)` checks if a config value still contains unresolved `env(...)` patterns. CheckPipes call this before their normal validation, producing clear errors like `"notarize.password: environment variable APPLE_PASSWORD is not set"`. CheckPipes for skippable pipes (release, homebrew, notarize) have skip guards that bypass this validation when the pipe won't run.
+
 **Guidelines:**
 - Always use environment variables for secrets
 - Never hardcode credentials
-- The substitution happens at config load time, not runtime
+- Substitution happens at config load time; validation happens in CheckPipes
+- CheckPipes must call `env.CheckResolved()` on fields likely to use `env()` references
 
 ### Configuration Validation
 
@@ -377,18 +383,35 @@ Validation happens in `CheckPipe` structs, not during config loading:
 ```go
 // config.go - Just loads, doesn't validate
 func LoadConfig(path string) (*Config, error) {
-    // Load YAML, substitute env vars
+    // Load YAML, substitute env vars (tolerant of missing vars)
     // Return Config struct
 }
 
-// internal/pipe/build/check.go - Validates
+// internal/pipe/build/check.go - Validates (with env var checks)
 func (CheckPipe) Run(ctx *context.Context) error {
-    if ctx.Config.Build.Configuration == "" {
-        return fmt.Errorf("build.configuration is required")
+    if err := env.CheckResolved(cfg.Configuration, "build.configuration"); err != nil {
+        return err
+    }
+    if err := validate.RequiredString(cfg.Configuration, "build.configuration"); err != nil {
+        return err
     }
     return nil
 }
 ```
+
+**Skip Guards**: CheckPipes for skippable pipes check their corresponding skip flag before validating:
+
+```go
+// internal/pipe/notarize/check.go
+func (CheckPipe) Run(ctx *context.Context) error {
+    if ctx.SkipNotarize {
+        return skipError("notarization skipped via --skip-notarize")
+    }
+    // ... validate fields ...
+}
+```
+
+This pattern ensures that `env()` references for skipped pipes don't produce errors.
 
 ## Testing Guidelines
 
