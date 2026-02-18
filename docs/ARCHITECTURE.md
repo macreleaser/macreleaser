@@ -28,7 +28,8 @@ macreleaser/
 │   ├── config/               # Configuration structs and loader
 │   ├── context/              # Shared execution context
 │   ├── env/                  # Environment variable handling
-│   ├── git/                  # Git version resolution
+│   ├── git/                  # Git state resolution (version, commit, branch, dirty)
+│   ├── logging/              # Custom log formatters (BulletFormatter)
 │   ├── github/               # GitHub API client + interface
 │   ├── homebrew/             # Homebrew cask rendering and SHA256
 │   ├── notarize/             # Apple notarization (notarytool, staple, spctl)
@@ -88,6 +89,8 @@ type Context struct {
     Config         *config.Config         // Parsed configuration
     Logger         *logrus.Logger         // Logger for output
     Version        string                 // Derived from git tag
+    Git            git.GitInfo            // Resolved git state (commit, branch, tag, dirty, count)
+    Clean          bool                   // When true, remove dist/ before building
     Artifacts      *Artifacts             // Populated by execution pipes
     SkipPublish    bool                   // When true, release and homebrew pipes skip publishing
     SkipNotarize   bool                   // When true, notarize pipe skips; sign disables hardened runtime
@@ -99,6 +102,8 @@ type Context struct {
 **Guidelines:**
 - Keep context minimal - only add fields that multiple pipes need
 - `Config` is read-only after creation
+- `Git` is populated before the pipeline runs and provides commit, branch, tag, dirty state, and commit count. The build pipe uses `Git.CommitCount` for `CURRENT_PROJECT_VERSION`.
+- `Clean` is set by the `--clean` flag and causes `dist/` to be removed before the pipeline runs.
 - `Artifacts` is the **intentional exception** to the read-only rule: execution pipes write to it (e.g., the build pipe sets `AppPath`, the archive pipe reads it). This is necessary because execution pipes form a chain where each step produces outputs consumed by the next. Validation pipes must **never** write to `Artifacts`.
 - Don't use context for communication between validation pipes (validation pipes should be independent)
 - Injectable clients (`GitHubClient`, `HomebrewClient`) enable testing without real API calls. The homebrew client is separate because tap operations may use a different token than release operations.
@@ -110,13 +115,7 @@ Executes registered pipes in two stages: validation then execution. Handles erro
 **Location**: `pkg/pipeline/pipeline.go`
 
 ```go
-// RunValidation executes only validation pipes (used by check command).
-func RunValidation(ctx *context.Context) error {
-    return runPipes(ctx, pipe.ValidationPipes)
-}
-
 // RunAll executes validation pipes first, then execution pipes.
-// Used by build, release, and snapshot commands.
 func RunAll(ctx *context.Context) error {
     if err := RunValidation(ctx); err != nil {
         return err
@@ -124,6 +123,31 @@ func RunAll(ctx *context.Context) error {
     return RunExecution(ctx)
 }
 ```
+
+Each pipe is announced as a top-level bullet via `WithField("action", p.String())`. Duration is logged as a sub-bullet when >= 1 second. The overall command duration is tracked in `shared.go` and printed as `<command> succeeded after Xs`.
+
+### 3a. Logging / Output Format
+
+**Location**: `pkg/logging/formatter.go`
+
+In non-debug mode, output uses `BulletFormatter` which produces goreleaser-style hierarchical bullets:
+
+```
+  * loading configuration
+  * getting and validating git state
+  * git state  branch=main commit=4cb72c9 dirty=false tag=v1.2.3
+  * building project
+    * scheme=TestApp  configuration=Release
+    * took: 45s
+  * signing application
+  * build succeeded after 48s
+```
+
+- Entries with `"action"` field -> top-level bullet: `  * <action>`
+- Info-level -> sub-bullet: `    * <message>`
+- Warn-level -> `    ! <message>`
+- Error-level -> `  x <message>`
+- Debug mode uses logrus `TextFormatter` with timestamps
 
 ### 4. Pipe Registry
 
@@ -475,7 +499,7 @@ func (m *MockGitHubClient) GetRepository(ctx context.Context, owner, repo string
 ## Security Considerations
 
 1. **File Permissions**: Config files written with `0600` (owner only)
-2. **Path Validation**: Config paths validated to prevent traversal attacks
+2. **Path Validation**: Config paths and workspace references validated to prevent traversal attacks. The `dist/` output directory uses a fixed path (no user-controlled components).
 3. **No Secrets in Config**: All secrets via environment variables
 4. **Interface Boundaries**: Clear interfaces prevent accidental misuse
 

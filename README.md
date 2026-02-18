@@ -9,10 +9,13 @@ MacReleaser is a specialized release automation tool focused exclusively on rele
 ## Features
 
 - **Build Automation**: Integration with `xcodebuild` for building archives
+- **Version Injection**: Automatically sets `CFBundleShortVersionString` and `CFBundleVersion` from git tag and commit count
 - **Code Signing & Notarization**: Automated code signing and Apple notarization
 - **Distribution Formats**: `.app` bundles, `.dmg` disk images, `.zip` archives
 - **Release Management**: GitHub releases with automatic asset uploads
 - **Homebrew Integration**: Automatic cask generation and tap management
+- **Git State Reporting**: Displays commit, branch, tag, and dirty state at pipeline start
+- **Polished Output**: Goreleaser-style hierarchical bullet-point output with duration tracking
 
 ## Quick Start
 
@@ -82,10 +85,15 @@ Notes:
 - `macreleaser init` - Generate example configuration
 - `macreleaser check` - Validate configuration file
 - `macreleaser build` - Build, archive, and package project
+  - `--clean` - Remove `dist/` before building
   - `--skip-notarize` - Skip notarization for quick local pipeline validation
 - `macreleaser release` - Full release process (build, sign, notarize, archive, GitHub release, Homebrew cask)
-- `macreleaser snapshot` - Test build with snapshot version (falls back to timestamp if no git tags)
+  - `--clean` - Remove `dist/` before building
+- `macreleaser snapshot` - Test build with snapshot version (`<tag>-SNAPSHOT-<shortcommit>`, or `0.0.0-SNAPSHOT-<shortcommit>` when no tags exist)
+  - `--clean` - Remove `dist/` before building
   - `--skip-notarize` - Skip notarization for quick local pipeline validation
+
+All commands support `--debug` for verbose output and `--config` to specify a custom config path.
 
 ## Requirements
 
