@@ -12,6 +12,10 @@ var releaseCmd = &cobra.Command{
 This will build, sign, notarize, package, and release your application
 to GitHub. Requires GITHUB_TOKEN environment variable for authentication.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		runPipelineCommand("Release", requireGitVersion)
+		var opts []pipelineOption
+		if clean, _ := cmd.Flags().GetBool("clean"); clean {
+			opts = append(opts, withClean())
+		}
+		runPipelineCommand("Release", requireGitVersion, opts...)
 	},
 }

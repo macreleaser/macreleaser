@@ -45,6 +45,11 @@ func registerCommands() {
 	rootCmd.AddCommand(releaseCmd)
 	rootCmd.AddCommand(snapshotCmd)
 
+	// --clean is available on build, release, and snapshot
+	buildCmd.Flags().Bool("clean", false, "remove dist/ before building")
+	releaseCmd.Flags().Bool("clean", false, "remove dist/ before building")
+	snapshotCmd.Flags().Bool("clean", false, "remove dist/ before building")
+
 	// --skip-notarize is available on build and snapshot (not release)
 	buildCmd.Flags().Bool("skip-notarize", false, "skip notarization (for quick local pipeline validation)")
 	snapshotCmd.Flags().Bool("skip-notarize", false, "skip notarization (for quick local pipeline validation)")

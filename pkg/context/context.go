@@ -12,7 +12,7 @@ import (
 // Artifacts holds runtime output state populated by execution pipes.
 // Subsequent pipes consume this data to chain build → archive → package steps.
 type Artifacts struct {
-	BuildOutputDir   string   // dist/<project>/<version>/
+	BuildOutputDir   string   // dist/
 	ArchivePath      string   // path to .xcarchive
 	AppPath          string   // path to extracted .app
 	Packages         []string // paths to .zip, .dmg outputs

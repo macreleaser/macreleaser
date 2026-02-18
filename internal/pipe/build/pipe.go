@@ -19,21 +19,13 @@ func (Pipe) String() string { return "building project" }
 func (Pipe) Run(ctx *context.Context) error {
 	cfg := ctx.Config
 
-	// Validate path components to prevent traversal via config or git tags
-	if !filepath.IsLocal(cfg.Project.Name) {
-		return fmt.Errorf("project.name contains a path traversal or absolute path: %q", cfg.Project.Name)
-	}
-	if !filepath.IsLocal(ctx.Version) {
-		return fmt.Errorf("version contains a path traversal or absolute path: %q", ctx.Version)
-	}
-
-	// Determine output directory
-	outputDir := filepath.Join("dist", cfg.Project.Name, ctx.Version)
+	// Determine output directory (flat dist/ layout, matching goreleaser)
+	outputDir := "dist"
 	ctx.Artifacts.BuildOutputDir = outputDir
 
 	// Fail early if output directory already exists (stale build)
 	if _, err := os.Stat(outputDir); err == nil {
-		return fmt.Errorf("output directory %s already exists — remove it or use a different version", outputDir)
+		return fmt.Errorf("output directory %s already exists — use --clean to remove it first", outputDir)
 	}
 
 	if err := os.MkdirAll(outputDir, 0755); err != nil {

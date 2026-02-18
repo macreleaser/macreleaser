@@ -17,6 +17,9 @@ This allows you to test the release process without affecting
 versioned releases. If no git tags exist, a snapshot version is generated.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		opts := []pipelineOption{withSkipPublish()}
+		if clean, _ := cmd.Flags().GetBool("clean"); clean {
+			opts = append(opts, withClean())
+		}
 		if skip, _ := cmd.Flags().GetBool("skip-notarize"); skip {
 			opts = append(opts, withSkipNotarize())
 		}

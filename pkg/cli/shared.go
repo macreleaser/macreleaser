@@ -63,6 +63,14 @@ func withSkipNotarize() pipelineOption {
 	}
 }
 
+// withClean returns an option that sets Clean on the context,
+// causing dist/ to be removed before building.
+func withClean() pipelineOption {
+	return func(ctx *macContext.Context) {
+		ctx.Clean = true
+	}
+}
+
 // runPipelineCommand is the shared implementation for build, release, and snapshot.
 // resolveVersion returns the version string to use; commandName appears in error messages.
 func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) string, opts ...pipelineOption) {
@@ -91,6 +99,14 @@ func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) 
 	ctx.Git = gitInfo
 	for _, opt := range opts {
 		opt(ctx)
+	}
+
+	// Clean dist/ if requested
+	if ctx.Clean {
+		logger.Info("Cleaning distribution directory")
+		if err := os.RemoveAll("dist"); err != nil {
+			ExitWithErrorf(logger, "Failed to clean dist/: %v", err)
+		}
 	}
 
 	if err := pipeline.RunAll(ctx); err != nil {
