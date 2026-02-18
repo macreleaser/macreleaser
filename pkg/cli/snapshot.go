@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/macreleaser/macreleaser/pkg/git"
 	"github.com/sirupsen/logrus"
@@ -25,15 +24,20 @@ versioned releases. If no git tags exist, a snapshot version is generated.`,
 	},
 }
 
-// snapshotVersion resolves a snapshot version, falling back to a timestamp if no tags exist.
+// snapshotVersion resolves a snapshot version in goreleaser-style format:
+// <tag>-SNAPSHOT-<shortcommit> or 0.0.0-SNAPSHOT-<shortcommit> when no tags exist.
 func snapshotVersion(logger *logrus.Logger) string {
-	version, err := git.ResolveVersion()
+	short, err := git.ShortCommit()
 	if err != nil {
-		version = fmt.Sprintf("snapshot-%s", time.Now().Format("20060102150405"))
-		logger.Infof("No git tags found, using snapshot version: %s", version)
-	} else {
-		version = version + "-snapshot"
-		logger.Infof("Version: %s", version)
+		ExitWithErrorf(logger, "Failed to resolve git commit: %v", err)
 	}
+
+	tag, tagErr := git.ResolveVersion()
+	if tagErr != nil {
+		tag = "0.0.0"
+	}
+
+	version := fmt.Sprintf("%s-SNAPSHOT-%s", tag, short)
+	logger.Infof("Version: %s (snapshot)", version)
 	return version
 }
