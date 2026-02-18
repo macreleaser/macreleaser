@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/macreleaser/macreleaser/pkg/config"
+	"github.com/macreleaser/macreleaser/pkg/git"
 	"github.com/macreleaser/macreleaser/pkg/github"
 	"github.com/sirupsen/logrus"
 )
@@ -25,6 +26,8 @@ type Context struct {
 	Config         *config.Config
 	Logger         *logrus.Logger
 	Version        string                 // derived from git tag
+	Git            git.GitInfo            // resolved git state
+	Clean          bool                   // when true, remove dist/ before building
 	Artifacts      *Artifacts             // populated by execution pipes
 	SkipPublish    bool                   // when true, release pipe skips publishing
 	SkipNotarize   bool                   // when true, notarize pipe skips notarization

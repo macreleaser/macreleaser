@@ -7,6 +7,7 @@ import (
 
 	"github.com/macreleaser/macreleaser/pkg/config"
 	macContext "github.com/macreleaser/macreleaser/pkg/context"
+	"github.com/macreleaser/macreleaser/pkg/git"
 	"github.com/macreleaser/macreleaser/pkg/pipeline"
 	"github.com/sirupsen/logrus"
 )
@@ -75,10 +76,19 @@ func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) 
 
 	logger.Info("Configuration loaded successfully")
 
+	// Resolve git state
+	gitInfo, err := git.ResolveGitInfo()
+	if err != nil {
+		ExitWithErrorf(logger, "Failed to resolve git state: %v", err)
+	}
+	logger.Infof("Git state: commit=%s branch=%s tag=%s dirty=%v",
+		gitInfo.ShortCommit, gitInfo.Branch, gitInfo.Tag, gitInfo.Dirty)
+
 	version := resolveVersion(logger)
 
 	ctx := macContext.NewContext(context.Background(), cfg, logger)
 	ctx.Version = version
+	ctx.Git = gitInfo
 	for _, opt := range opts {
 		opt(ctx)
 	}
