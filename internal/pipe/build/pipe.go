@@ -52,6 +52,10 @@ func (Pipe) Run(ctx *context.Context) error {
 	ctx.Logger.Infof("Building scheme %q with configuration %q", cfg.Project.Scheme, cfg.Build.Configuration)
 	ctx.Logger.Infof("Archive path: %s", archivePath)
 
+	// Derive version build settings
+	marketingVersion := strings.TrimPrefix(ctx.Version, "v")
+	buildNumber := fmt.Sprintf("%d", ctx.Git.CommitCount)
+
 	// Run xcodebuild
 	args := build.XcodebuildArgs{
 		Scheme:        cfg.Project.Scheme,
@@ -59,6 +63,8 @@ func (Pipe) Run(ctx *context.Context) error {
 		WorkspaceType: wsType,
 		Configuration: cfg.Build.Configuration,
 		ArchivePath:   archivePath,
+		Version:       marketingVersion,
+		BuildNumber:   buildNumber,
 	}
 
 	output, err := build.RunXcodebuild(args)

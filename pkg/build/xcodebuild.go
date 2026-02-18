@@ -13,6 +13,8 @@ type XcodebuildArgs struct {
 	WorkspaceType WorkspaceType
 	Configuration string // -configuration
 	ArchivePath   string // -archivePath
+	Version       string // MARKETING_VERSION build setting (CFBundleShortVersionString)
+	BuildNumber   string // CURRENT_PROJECT_VERSION build setting (CFBundleVersion)
 }
 
 // BuildArchiveArgs constructs the argument list for xcodebuild archive.
@@ -41,6 +43,14 @@ func BuildArchiveArgs(args XcodebuildArgs) []string {
 	}
 
 	cmdArgs = append(cmdArgs, "archive")
+
+	// Build settings go after the action
+	if args.Version != "" {
+		cmdArgs = append(cmdArgs, "MARKETING_VERSION="+args.Version)
+	}
+	if args.BuildNumber != "" {
+		cmdArgs = append(cmdArgs, "CURRENT_PROJECT_VERSION="+args.BuildNumber)
+	}
 
 	return cmdArgs
 }

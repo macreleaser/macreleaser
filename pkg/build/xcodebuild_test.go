@@ -59,6 +59,39 @@ func TestBuildArchiveArgs(t *testing.T) {
 			args: XcodebuildArgs{},
 			want: []string{"archive"},
 		},
+		{
+			name: "with version injection",
+			args: XcodebuildArgs{
+				Scheme:        "MyApp",
+				Workspace:     "MyApp.xcworkspace",
+				WorkspaceType: Workspace,
+				Configuration: "Release",
+				ArchivePath:   "dist/MyApp.xcarchive",
+				Version:       "1.2.3",
+				BuildNumber:   "42",
+			},
+			want: []string{
+				"-workspace", "MyApp.xcworkspace",
+				"-scheme", "MyApp",
+				"-configuration", "Release",
+				"-archivePath", "dist/MyApp.xcarchive",
+				"archive",
+				"MARKETING_VERSION=1.2.3",
+				"CURRENT_PROJECT_VERSION=42",
+			},
+		},
+		{
+			name: "version only without build number",
+			args: XcodebuildArgs{
+				Scheme:  "MyApp",
+				Version: "2.0.0",
+			},
+			want: []string{
+				"-scheme", "MyApp",
+				"archive",
+				"MARKETING_VERSION=2.0.0",
+			},
+		},
 	}
 
 	for _, tt := range tests {
