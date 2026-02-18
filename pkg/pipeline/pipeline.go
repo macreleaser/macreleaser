@@ -48,19 +48,21 @@ func RunAll(ctx *context.Context) error {
 // runPipes executes a slice of pipes in sequence.
 func runPipes(ctx *context.Context, pipes []Piper) error {
 	for _, p := range pipes {
-		ctx.Logger.Infof("Running: %s", p.String())
+		ctx.Logger.WithField("action", p.String()).Info()
 		start := time.Now()
 
 		if err := p.Run(ctx); err != nil {
 			if isSkip(err) {
-				ctx.Logger.Infof("Skipping: %v", err)
+				ctx.Logger.Warnf("skipped: %v", err)
 				continue
 			}
 			return fmt.Errorf("%s: %w", p.String(), err)
 		}
 
 		duration := time.Since(start)
-		ctx.Logger.Infof("Completed: %s (%s)", p.String(), duration.Round(time.Millisecond))
+		if duration >= time.Second {
+			ctx.Logger.Infof("took: %s", duration.Round(time.Millisecond))
+		}
 	}
 	return nil
 }

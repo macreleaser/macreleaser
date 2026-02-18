@@ -10,6 +10,7 @@ import (
 	"github.com/macreleaser/macreleaser/pkg/config"
 	macContext "github.com/macreleaser/macreleaser/pkg/context"
 	"github.com/macreleaser/macreleaser/pkg/git"
+	"github.com/macreleaser/macreleaser/pkg/logging"
 	"github.com/macreleaser/macreleaser/pkg/pipeline"
 	"github.com/sirupsen/logrus"
 )
@@ -26,9 +27,7 @@ func SetupLogger(debug bool) *logrus.Logger {
 		})
 	} else {
 		logger.SetLevel(logrus.InfoLevel)
-		logger.SetFormatter(&logrus.TextFormatter{
-			DisableTimestamp: true,
-		})
+		logger.SetFormatter(&logging.BulletFormatter{})
 	}
 
 	return logger
@@ -79,20 +78,25 @@ func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) 
 	logger := SetupLogger(GetDebugMode())
 	configPath := GetConfigPath()
 
+	logger.WithField("action", "loading configuration").Info()
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
 		ExitWithErrorf(logger, "Failed to load configuration: %v", err)
 	}
 
-	logger.Info("Configuration loaded successfully")
-
 	// Resolve git state
+	logger.WithField("action", "getting and validating git state").Info()
 	gitInfo, err := git.ResolveGitInfo()
 	if err != nil {
 		ExitWithErrorf(logger, "Failed to resolve git state: %v", err)
 	}
-	logger.Infof("Git state: commit=%s branch=%s tag=%s dirty=%v",
-		gitInfo.ShortCommit, gitInfo.Branch, gitInfo.Tag, gitInfo.Dirty)
+	logger.WithFields(logrus.Fields{
+		"action": "git state",
+		"commit": gitInfo.ShortCommit,
+		"branch": gitInfo.Branch,
+		"tag":    gitInfo.Tag,
+		"dirty":  gitInfo.Dirty,
+	}).Info()
 
 	version := resolveVersion(logger)
 
