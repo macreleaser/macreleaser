@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/macreleaser/macreleaser/pkg/config"
 	macContext "github.com/macreleaser/macreleaser/pkg/context"
@@ -109,11 +111,32 @@ func runPipelineCommand(commandName string, resolveVersion func(*logrus.Logger) 
 		}
 	}
 
+	start := time.Now()
 	if err := pipeline.RunAll(ctx); err != nil {
 		ExitWithErrorf(logger, "%s failed: %v", commandName, err)
 	}
+	elapsed := time.Since(start)
 
 	printArtifactSummary(ctx)
+	logger.Infof("%s succeeded after %s", strings.ToLower(commandName), formatDuration(elapsed))
+}
+
+// formatDuration formats a duration in a human-friendly way:
+// sub-second -> "523ms", seconds -> "5s", minutes+seconds -> "1m32s".
+func formatDuration(d time.Duration) string {
+	if d < time.Second {
+		return fmt.Sprintf("%dms", d.Milliseconds())
+	}
+	d = d.Round(time.Second)
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	m := int(d.Minutes())
+	s := int(d.Seconds()) % 60
+	if s == 0 {
+		return fmt.Sprintf("%dm", m)
+	}
+	return fmt.Sprintf("%dm%ds", m, s)
 }
 
 // printArtifactSummary prints a concise summary of produced artifacts.
