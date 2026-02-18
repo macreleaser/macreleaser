@@ -92,9 +92,12 @@
 - ✅ Lint and test on ubuntu-latest; smoke-test on macos-latest
 - ✅ Existing lint issues fixed (unchecked error returns, proper noun nolint directives)
 
-**Phase 3** (Planned): Release workflow
-- Tag-triggered GoReleaser release
-- Homebrew tap formula auto-publish
+**Phase 3** (Complete): Release workflow
+- ✅ `.github/workflows/release.yml` triggered on `v*` tag pushes
+- ✅ GoReleaser builds darwin/amd64 + darwin/arm64, creates GitHub release with changelog
+- ✅ `repository_dispatch` triggers formula update in `macreleaser/homebrew-tap`
+- ✅ Source-build Homebrew formula (`Formula/macreleaser.rb`) with `go build` and ldflags
+- ✅ Auto-update workflow in tap repo updates formula URL and SHA256 on new releases
 
 ## Milestone 3: Custom GitHub action
 
