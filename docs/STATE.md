@@ -101,11 +101,11 @@
 
 ## Milestone 3: GitHub Action
 
-**Phase 1** (Planned): Code signing setup action
-- Composite action at repo root (`action.yml`)
-- Temporary keychain creation and `.p12` certificate import
-- macreleaser binary installation from GitHub releases
-- Release workflow tag pattern narrowed from `v*` to `v*.*.*`
+**Phase 1** (Complete): Code signing setup action
+- ✅ Composite action at repo root (`action.yml`)
+- ✅ Temporary keychain creation and `.p12` certificate import
+- ✅ macreleaser binary installation from GitHub releases
+- ✅ Release workflow tag pattern narrowed from `v*` to `v*.*.*`
 
 **Phase 2** (Planned): Integration testing
 - CI test workflow in testapp: exercises action, runs `macreleaser build --skip-notarize`

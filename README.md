@@ -29,6 +29,25 @@ cd macreleaser
 make install
 ```
 
+### Homebrew
+
+```bash
+brew install macreleaser/tap/macreleaser
+```
+
+### GitHub Actions
+
+MacReleaser provides a composite action that sets up macOS code signing and installs the binary:
+
+```yaml
+- uses: macreleaser/macreleaser@v1
+  with:
+    p12-base64: ${{ secrets.P12_BASE64 }}
+    p12-password: ${{ secrets.P12_PASSWORD }}
+```
+
+This creates a temporary keychain, imports your Developer ID certificate, and installs `macreleaser`. See [CI Usage](#ci-usage) for a full workflow example.
+
 ### Basic Usage
 
 1. **Generate configuration**:
@@ -133,6 +152,55 @@ If no `changelog` section is present, a flat bullet list of all commits is gener
   - `--skip-notarize` - Skip notarization for quick local pipeline validation
 
 All commands support `--debug` for verbose output and `--config` to specify a custom config path.
+
+## CI Usage
+
+The `macreleaser/macreleaser` action handles the macOS code signing setup that is typically error-prone in CI:
+
+```yaml
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: macreleaser/macreleaser@v1
+        with:
+          p12-base64: ${{ secrets.P12_BASE64 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+      - run: macreleaser release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+```
+
+### Action Inputs
+
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `p12-base64` | yes | — | Base64-encoded `.p12` certificate file |
+| `p12-password` | yes | — | Password for the `.p12` file |
+| `macreleaser-version` | no | `latest` | Version to install (e.g., `v0.3.0`) |
+
+### Preparing the Certificate Secret
+
+Export your Developer ID certificate from Keychain Access as a `.p12` file, then base64-encode it:
+
+```bash
+base64 < cert.p12 | pbcopy
+```
+
+Add the result as `P12_BASE64` and the export password as `P12_PASSWORD` in your repository secrets.
 
 ## Requirements
 

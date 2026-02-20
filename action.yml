@@ -1,0 +1,79 @@
+name: "Setup MacReleaser"
+description: "Set up macOS code signing and install MacReleaser"
+
+inputs:
+  p12-base64:
+    description: "Base64-encoded .p12 certificate file"
+    required: true
+  p12-password:
+    description: "Password for the .p12 file"
+    required: true
+  macreleaser-version:
+    description: "MacReleaser version to install (default: latest)"
+    required: false
+    default: "latest"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up code signing keychain
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        KEYCHAIN_PATH="$RUNNER_TEMP/macreleaser.keychain-db"
+        KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+
+        # Create and configure temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+        # Add to search list (prepend to existing)
+        security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+        # Import certificate
+        security import <(echo "${{ inputs.p12-base64 }}" | base64 --decode) \
+          -f pkcs12 \
+          -k "$KEYCHAIN_PATH" \
+          -P "${{ inputs.p12-password }}" \
+          -T /usr/bin/codesign \
+          -T /usr/bin/security
+
+        # Allow codesign to access the key without UI prompt
+        security set-key-partition-list \
+          -S apple-tool:,apple: \
+          -s \
+          -k "$KEYCHAIN_PASSWORD" \
+          "$KEYCHAIN_PATH"
+
+        echo "Code signing keychain configured"
+
+    - name: Install MacReleaser
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        VERSION="${{ inputs.macreleaser-version }}"
+        ARCH="$(uname -m)"
+        case "$ARCH" in
+          arm64) GOARCH="arm64" ;;
+          x86_64) GOARCH="amd64" ;;
+          *) echo "Unsupported architecture: $ARCH" >&2; exit 1 ;;
+        esac
+
+        REPO="macreleaser/macreleaser"
+
+        if [ "$VERSION" = "latest" ]; then
+          gh release download --repo "$REPO" --pattern "macreleaser_*_darwin_${GOARCH}.tar.gz" --dir "$RUNNER_TEMP"
+        else
+          TAG="$VERSION"
+          # Ensure tag has v prefix
+          [[ "$TAG" == v* ]] || TAG="v$TAG"
+          gh release download "$TAG" --repo "$REPO" --pattern "macreleaser_*_darwin_${GOARCH}.tar.gz" --dir "$RUNNER_TEMP"
+        fi
+
+        tar -xzf "$RUNNER_TEMP"/macreleaser_*_darwin_${GOARCH}.tar.gz -C /usr/local/bin macreleaser
+        echo "Installed macreleaser $(macreleaser --version)"
+      env:
+        GH_TOKEN: ${{ github.token }}
