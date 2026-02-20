@@ -37,10 +37,10 @@ runs:
         security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
 
         # Import certificate
-        security import <(echo "${{ inputs.p12-base64 }}" | base64 --decode) \
+        security import <(echo "$P12_BASE64" | base64 --decode) \
           -f pkcs12 \
           -k "$KEYCHAIN_PATH" \
-          -P "${{ inputs.p12-password }}" \
+          -P "$P12_PASSWORD" \
           -T /usr/bin/codesign \
           -T /usr/bin/security
 
@@ -52,6 +52,9 @@ runs:
           "$KEYCHAIN_PATH"
 
         echo "Code signing keychain configured"
+      env:
+        P12_BASE64: ${{ inputs.p12-base64 }}
+        P12_PASSWORD: ${{ inputs.p12-password }}
 
     - name: Install MacReleaser
       shell: bash
