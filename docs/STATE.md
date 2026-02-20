@@ -107,10 +107,10 @@
 - ✅ macreleaser binary installation from GitHub releases
 - ✅ Release workflow tag pattern narrowed from `v*` to `v*.*.*`
 
-**Phase 2** (Planned): Integration testing
-- CI test workflow in testapp: exercises action, runs `macreleaser build --skip-notarize`
-- Release workflow in testapp: tag-triggered full pipeline with notarization
-- Validates keychain setup, signing identity discovery, and binary installation
+**Phase 2** (Complete): Integration testing
+- ✅ CI test workflow in testapp: exercises action, runs `macreleaser build --skip-notarize`
+- ✅ Release workflow in testapp: tag-triggered full pipeline with notarization
+- ✅ Validates keychain setup, signing identity discovery, and binary installation
 
 ## Milestone 4: Enhanced Features
 
