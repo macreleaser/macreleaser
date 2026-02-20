@@ -64,7 +64,6 @@ func (Pipe) Run(ctx *context.Context) error {
 		Desc:     ctx.Config.Homebrew.Cask.Desc,
 		Homepage: ctx.Config.Homebrew.Cask.Homepage,
 		AppName:  filepath.Base(ctx.Artifacts.AppPath),
-		License:  ctx.Config.Homebrew.Cask.License,
 	}
 
 	// Validate cask token doesn't contain path traversal sequences

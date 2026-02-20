@@ -42,52 +42,6 @@ func TestRenderCask(t *testing.T) {
 	}
 }
 
-func TestRenderCaskWithLicense(t *testing.T) {
-	data := CaskData{
-		Token:    "myapp",
-		Version:  "1.0.0",
-		SHA256:   "abc123",
-		URL:      "https://example.com/myapp.zip",
-		Name:     "MyApp",
-		Desc:     "An app",
-		Homepage: "https://example.com",
-		AppName:  "MyApp.app",
-		License:  "mit",
-	}
-
-	got, err := RenderCask(data)
-	if err != nil {
-		t.Fatalf("RenderCask() unexpected error: %v", err)
-	}
-
-	if !strings.Contains(got, `license "mit"`) {
-		t.Errorf("RenderCask() output missing license stanza\ngot:\n%s", got)
-	}
-}
-
-func TestRenderCaskWithoutLicense(t *testing.T) {
-	data := CaskData{
-		Token:    "myapp",
-		Version:  "1.0.0",
-		SHA256:   "abc123",
-		URL:      "https://example.com/myapp.zip",
-		Name:     "MyApp",
-		Desc:     "An app",
-		Homepage: "https://example.com",
-		AppName:  "MyApp.app",
-		License:  "",
-	}
-
-	got, err := RenderCask(data)
-	if err != nil {
-		t.Fatalf("RenderCask() unexpected error: %v", err)
-	}
-
-	if strings.Contains(got, "license") {
-		t.Errorf("RenderCask() output should not contain license stanza when License is empty\ngot:\n%s", got)
-	}
-}
-
 func TestRenderCaskRejectsDoubleQuotes(t *testing.T) {
 	base := CaskData{
 		Token:    "myapp",
@@ -108,7 +62,6 @@ func TestRenderCaskRejectsDoubleQuotes(t *testing.T) {
 		{"name", func(d CaskData) CaskData { d.Name = `My"App`; return d }},
 		{"token", func(d CaskData) CaskData { d.Token = `my"app`; return d }},
 		{"homepage", func(d CaskData) CaskData { d.Homepage = `https://example.com"bad`; return d }},
-		{"license", func(d CaskData) CaskData { d.License = `mit"`; return d }},
 	}
 
 	for _, tt := range fields {

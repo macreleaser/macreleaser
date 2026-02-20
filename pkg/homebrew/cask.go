@@ -19,7 +19,6 @@ type CaskData struct {
 	Desc     string // short description
 	Homepage string // homepage URL
 	AppName  string // .app bundle name (e.g., "MyApp.app")
-	License  string // optional SPDX license identifier
 }
 
 const caskTemplate = `cask "{{.Token}}" do
@@ -30,10 +29,6 @@ const caskTemplate = `cask "{{.Token}}" do
   name "{{.Name}}"
   desc "{{.Desc}}"
   homepage "{{.Homepage}}"
-{{- if .License}}
-
-  license "{{.License}}"
-{{- end}}
 
   app "{{.AppName}}"
 end
@@ -63,7 +58,6 @@ func RenderCask(data CaskData) (string, error) {
 		"desc":     data.Desc,
 		"homepage": data.Homepage,
 		"app_name": data.AppName,
-		"license":  data.License,
 	}
 	for name, value := range fields {
 		if err := validateCaskField(name, value); err != nil {
