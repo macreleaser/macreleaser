@@ -13,13 +13,14 @@ import (
 
 // Config represents the complete macreleaser configuration
 type Config struct {
-	Project  ProjectConfig  `yaml:"project"`
-	Build    BuildConfig    `yaml:"build"`
-	Sign     SignConfig     `yaml:"sign"`
-	Notarize NotarizeConfig `yaml:"notarize"`
-	Archive  ArchiveConfig  `yaml:"archive"`
-	Release  ReleaseConfig  `yaml:"release"`
-	Homebrew HomebrewConfig `yaml:"homebrew"`
+	Project   ProjectConfig   `yaml:"project"`
+	Build     BuildConfig     `yaml:"build"`
+	Sign      SignConfig      `yaml:"sign"`
+	Notarize  NotarizeConfig  `yaml:"notarize"`
+	Archive   ArchiveConfig   `yaml:"archive"`
+	Changelog ChangelogConfig `yaml:"changelog,omitempty"`
+	Release   ReleaseConfig   `yaml:"release"`
+	Homebrew  HomebrewConfig  `yaml:"homebrew"`
 }
 
 // ProjectConfig contains project-specific settings
@@ -66,6 +67,27 @@ type DMGConfig struct {
 // ZipConfig contains ZIP-specific configuration
 type ZipConfig struct {
 	CompressionLevel int `yaml:"compression_level,omitempty"`
+}
+
+// ChangelogConfig contains changelog generation configuration
+type ChangelogConfig struct {
+	Disable bool                   `yaml:"disable,omitempty"`
+	Sort    string                 `yaml:"sort,omitempty"`
+	Filters ChangelogFiltersConfig `yaml:"filters,omitempty"`
+	Groups  []ChangelogGroupConfig `yaml:"groups,omitempty"`
+}
+
+// ChangelogFiltersConfig contains commit filtering configuration
+type ChangelogFiltersConfig struct {
+	Exclude []string `yaml:"exclude,omitempty"`
+	Include []string `yaml:"include,omitempty"`
+}
+
+// ChangelogGroupConfig contains commit grouping configuration
+type ChangelogGroupConfig struct {
+	Title  string `yaml:"title"`
+	Regexp string `yaml:"regexp,omitempty"`
+	Order  int    `yaml:"order,omitempty"`
 }
 
 // ReleaseConfig contains release configuration

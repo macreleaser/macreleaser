@@ -239,6 +239,61 @@ func TestPipeUploadAssetError(t *testing.T) {
 	}
 }
 
+func TestPipeReleaseNotesBody(t *testing.T) {
+	ctx := newContext()
+	ctx.Version = "v1.2.3"
+	ctx.ReleaseNotes = "## v1.2.3\n\n- feat: add widget\n- fix: resolve crash\n"
+
+	mock := github.NewMockClient()
+	ctx.GitHubClient = mock
+
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "TestApp-v1.2.3.zip")
+	if err := os.WriteFile(zipPath, []byte("fake-zip"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	ctx.Artifacts.Packages = []string{zipPath}
+
+	err := Pipe{}.Run(ctx)
+	if err != nil {
+		t.Fatalf("Run() unexpected error: %v", err)
+	}
+
+	rel := mock.Releases["testowner/testrepo"][0]
+	if rel.Body == nil {
+		t.Fatal("release body is nil, expected release notes")
+	}
+	if got := rel.GetBody(); got != ctx.ReleaseNotes {
+		t.Errorf("release body = %q, want %q", got, ctx.ReleaseNotes)
+	}
+}
+
+func TestPipeEmptyReleaseNotes(t *testing.T) {
+	ctx := newContext()
+	ctx.Version = "v1.2.3"
+	// ReleaseNotes is empty — Body should be nil
+
+	mock := github.NewMockClient()
+	ctx.GitHubClient = mock
+
+	tmpDir := t.TempDir()
+	zipPath := filepath.Join(tmpDir, "TestApp-v1.2.3.zip")
+	if err := os.WriteFile(zipPath, []byte("fake-zip"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	ctx.Artifacts.Packages = []string{zipPath}
+
+	err := Pipe{}.Run(ctx)
+	if err != nil {
+		t.Fatalf("Run() unexpected error: %v", err)
+	}
+
+	rel := mock.Releases["testowner/testrepo"][0]
+	if rel.Body != nil {
+		t.Errorf("release body = %q, want nil", rel.GetBody())
+	}
+}
+
 func TestPipeSkipsNonRegularFiles(t *testing.T) {
 	ctx := newContext()
 	ctx.Version = "v1.0.0"

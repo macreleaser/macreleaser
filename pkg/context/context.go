@@ -18,6 +18,7 @@ type Artifacts struct {
 	Packages         []string // paths to .zip, .dmg outputs
 	ReleaseURL       string   // HTML URL of the created GitHub release
 	HomebrewCaskPath string   // local path to the generated cask .rb file
+	ChangelogPath    string   // path to dist/CHANGELOG.md
 }
 
 // Context provides shared state for all pipes
@@ -29,6 +30,7 @@ type Context struct {
 	Git            git.GitInfo            // resolved git state
 	Clean          bool                   // when true, remove dist/ before building
 	Artifacts      *Artifacts             // populated by execution pipes
+	ReleaseNotes   string                 // generated changelog for GitHub release body
 	SkipPublish    bool                   // when true, release pipe skips publishing
 	SkipNotarize   bool                   // when true, notarize pipe skips notarization
 	GitHubClient   github.ClientInterface // injectable GitHub API client

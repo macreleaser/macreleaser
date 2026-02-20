@@ -12,6 +12,7 @@ MacReleaser is a specialized release automation tool focused exclusively on rele
 - **Version Injection**: Automatically sets `CFBundleShortVersionString` and `CFBundleVersion` from git tag and commit count
 - **Code Signing & Notarization**: Automated code signing and Apple notarization
 - **Distribution Formats**: `.app` bundles, `.dmg` disk images, `.zip` archives
+- **Release Notes**: Automatic changelog generation from git history with filtering and grouping
 - **Release Management**: GitHub releases with automatic asset uploads
 - **Homebrew Integration**: Automatic cask generation and tap management
 - **Git State Reporting**: Displays commit, branch, tag, and dirty state at pipeline start
@@ -87,6 +88,36 @@ A `GITHUB_TOKEN` environment variable is required to publish GitHub releases. An
 ```bash
 GITHUB_TOKEN=$(gh auth token) macreleaser release
 ```
+
+### Release Notes
+
+MacReleaser generates release notes from git commit history between tags. The changelog is written to `dist/CHANGELOG.md` and used as the GitHub release body.
+
+```yaml
+changelog:
+  sort: desc          # "asc" or "desc" (default: desc)
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^Merge pull request"
+  groups:
+    - title: Features
+      regexp: "^feat:"
+      order: 0
+    - title: Bug Fixes
+      regexp: "^fix:"
+      order: 1
+    - title: Other Changes
+      order: 2          # no regexp = catch-all for unmatched commits
+```
+
+- **Filtering**: `exclude` removes matching commits; `include` keeps only matching commits. Both use Go regular expressions.
+- **Grouping**: Commits are assigned to the first group whose `regexp` matches. A group without a `regexp` acts as a catch-all. Groups are sorted by `order`.
+- **Sorting**: `desc` (default) shows newest commits first; `asc` reverses to oldest first.
+- **Disabling**: Set `disable: true` to skip changelog generation entirely.
+
+If no `changelog` section is present, a flat bullet list of all commits is generated.
 
 ## Commands
 

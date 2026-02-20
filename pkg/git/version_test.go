@@ -209,6 +209,84 @@ func TestResolveVersionLatestTag(t *testing.T) {
 	}
 }
 
+func TestPreviousTag(t *testing.T) {
+	dir := setupGitRepo(t, "v1.0.0")
+	chdir(t, dir)
+
+	// Add another commit and tag
+	writeFile(t, filepath.Join(dir, "file2.txt"), "content2")
+	runGit(t, dir, "add", ".")
+	runGit(t, dir, "commit", "-m", "second commit")
+	runGit(t, dir, "tag", "v2.0.0")
+
+	prev, err := PreviousTag("v2.0.0")
+	if err != nil {
+		t.Fatalf("PreviousTag() error = %v", err)
+	}
+	if prev != "v1.0.0" {
+		t.Errorf("PreviousTag() = %q, want %q", prev, "v1.0.0")
+	}
+}
+
+func TestPreviousTagNoPrevious(t *testing.T) {
+	dir := setupGitRepo(t, "v1.0.0")
+	chdir(t, dir)
+
+	prev, err := PreviousTag("v1.0.0")
+	if err != nil {
+		t.Fatalf("PreviousTag() error = %v", err)
+	}
+	if prev != "" {
+		t.Errorf("PreviousTag() = %q, want empty string", prev)
+	}
+}
+
+func TestLogBetween(t *testing.T) {
+	dir := setupGitRepo(t, "v1.0.0")
+	chdir(t, dir)
+
+	// Add commits after v1.0.0
+	writeFile(t, filepath.Join(dir, "file2.txt"), "content2")
+	runGit(t, dir, "add", ".")
+	runGit(t, dir, "commit", "-m", "feat: add widget")
+
+	writeFile(t, filepath.Join(dir, "file3.txt"), "content3")
+	runGit(t, dir, "add", ".")
+	runGit(t, dir, "commit", "-m", "fix: resolve crash")
+	runGit(t, dir, "tag", "v2.0.0")
+
+	logs, err := LogBetween("v1.0.0", "v2.0.0")
+	if err != nil {
+		t.Fatalf("LogBetween() error = %v", err)
+	}
+	if len(logs) != 2 {
+		t.Fatalf("LogBetween() returned %d entries, want 2", len(logs))
+	}
+	// git log returns newest first
+	if logs[0] != "fix: resolve crash" {
+		t.Errorf("logs[0] = %q, want %q", logs[0], "fix: resolve crash")
+	}
+	if logs[1] != "feat: add widget" {
+		t.Errorf("logs[1] = %q, want %q", logs[1], "feat: add widget")
+	}
+}
+
+func TestLogBetweenEmptyFrom(t *testing.T) {
+	dir := setupGitRepo(t, "v1.0.0")
+	chdir(t, dir)
+
+	logs, err := LogBetween("", "v1.0.0")
+	if err != nil {
+		t.Fatalf("LogBetween() error = %v", err)
+	}
+	if len(logs) != 1 {
+		t.Fatalf("LogBetween() returned %d entries, want 1", len(logs))
+	}
+	if logs[0] != "initial commit" {
+		t.Errorf("logs[0] = %q, want %q", logs[0], "initial commit")
+	}
+}
+
 // setupGitRepo creates a temporary git repo and returns its path.
 // If git init is not possible (e.g., in a restricted sandbox), the test is skipped.
 func setupGitRepo(t *testing.T, tag string) string {

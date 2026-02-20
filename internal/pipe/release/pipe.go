@@ -50,11 +50,16 @@ func (Pipe) Run(ctx *context.Context) error {
 	repo := ctx.Config.Release.GitHub.Repo
 	releaseName := fmt.Sprintf("%s %s", ctx.Config.Project.Name, ctx.Version)
 
-	release, err := ctx.GitHubClient.CreateRelease(ctx.StdCtx, owner, repo, &gogithub.RepositoryRelease{
+	releaseReq := &gogithub.RepositoryRelease{
 		TagName: &ctx.Version,
 		Name:    &releaseName,
 		Draft:   &ctx.Config.Release.GitHub.Draft,
-	})
+	}
+	if ctx.ReleaseNotes != "" {
+		releaseReq.Body = &ctx.ReleaseNotes
+	}
+
+	release, err := ctx.GitHubClient.CreateRelease(ctx.StdCtx, owner, repo, releaseReq)
 	if err != nil {
 		if strings.Contains(err.Error(), "already_exists") {
 			return fmt.Errorf("release for tag %s already exists — delete the existing release or use a different version tag", ctx.Version)

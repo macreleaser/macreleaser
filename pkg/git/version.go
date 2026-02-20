@@ -129,6 +129,37 @@ func ResolveGitInfo() (GitInfo, error) {
 	return info, nil
 }
 
+// PreviousTag returns the tag immediately before the given tag.
+// Returns "" if no previous tag exists (i.e., the given tag is the first).
+func PreviousTag(tag string) (string, error) {
+	out, err := gitOutput("describe", "--tags", "--abbrev=0", tag+"^")
+	if err != nil {
+		// No previous tag — this is the first tag
+		return "", nil
+	}
+	return out, nil
+}
+
+// LogBetween returns commit subject lines between two refs.
+// If fromRef is empty, returns all commits up to toRef.
+func LogBetween(fromRef, toRef string) ([]string, error) {
+	var revRange string
+	if fromRef == "" {
+		revRange = toRef
+	} else {
+		revRange = fromRef + ".." + toRef
+	}
+
+	out, err := gitOutput("log", "--pretty=format:%s", revRange)
+	if err != nil {
+		return nil, err
+	}
+	if out == "" {
+		return nil, nil
+	}
+	return strings.Split(out, "\n"), nil
+}
+
 // gitOutput runs a git command and returns its trimmed stdout.
 func gitOutput(args ...string) (string, error) {
 	cmd := exec.Command("git", args...)

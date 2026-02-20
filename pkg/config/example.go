@@ -25,6 +25,16 @@ func ExampleConfig() *Config {
 				IconSize:   128,
 			},
 		},
+		Changelog: ChangelogConfig{
+			Sort: "desc",
+			Filters: ChangelogFiltersConfig{
+				Exclude: []string{"^docs:", "^chore:", "^Merge pull request"},
+			},
+			Groups: []ChangelogGroupConfig{
+				{Title: "Features", Regexp: "^feat:", Order: 0},
+				{Title: "Bug Fixes", Regexp: "^fix:", Order: 1},
+			},
+		},
 		Release: ReleaseConfig{
 			GitHub: GitHubConfig{
 				Owner: "yourname",

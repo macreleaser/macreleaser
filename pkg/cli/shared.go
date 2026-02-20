@@ -156,6 +156,10 @@ func printArtifactSummary(ctx *macContext.Context) {
 		ctx.Logger.Infof("  Package: %s", pkg)
 	}
 
+	if ctx.Artifacts.ChangelogPath != "" {
+		ctx.Logger.Infof("  Changelog: %s", ctx.Artifacts.ChangelogPath)
+	}
+
 	if ctx.Artifacts.ReleaseURL != "" {
 		ctx.Logger.Infof("  Release: %s", ctx.Artifacts.ReleaseURL)
 	}

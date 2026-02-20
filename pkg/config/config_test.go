@@ -46,6 +46,49 @@ homebrew:
 			expectError: false,
 		},
 		{
+			name: "config with changelog section",
+			yamlContent: `
+project:
+  name: "MyApp"
+  scheme: "MyApp"
+build:
+  configuration: "Release"
+sign:
+  identity: "Developer ID Application: Test (12345)"
+notarize:
+  apple_id: "test@example.com"
+  team_id: "12345"
+  password: "test-password"
+archive:
+  formats: ["dmg"]
+changelog:
+  sort: "desc"
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+  groups:
+    - title: "Features"
+      regexp: "^feat:"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^fix:"
+      order: 1
+release:
+  github:
+    owner: "testowner"
+    repo: "testrepo"
+    draft: false
+homebrew:
+  cask:
+    name: "testapp"
+    desc: "Test application"
+    homepage: "https://example.com"
+    license: "MIT"
+`,
+			expectError: false,
+		},
+		{
 			name: "partial config loads successfully",
 			yamlContent: `
 project:
@@ -103,6 +146,64 @@ project:
 				t.Error("Build configuration should not be empty")
 			}
 		})
+	}
+}
+
+func TestLoadConfigChangelog(t *testing.T) {
+	yamlContent := `
+project:
+  name: "MyApp"
+  scheme: "MyApp"
+build:
+  configuration: "Release"
+changelog:
+  sort: "desc"
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+    include:
+      - "^feat:"
+  groups:
+    - title: "Features"
+      regexp: "^feat:"
+      order: 0
+    - title: "Other"
+      order: 1
+`
+	tmpFile := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(tmpFile, []byte(yamlContent), 0644); err != nil {
+		t.Fatalf("Failed to create temporary config file: %v", err)
+	}
+
+	config, err := LoadConfig(tmpFile)
+	if err != nil {
+		t.Fatalf("LoadConfig() error = %v", err)
+	}
+
+	if config.Changelog.Sort != "desc" {
+		t.Errorf("Changelog.Sort = %q, want %q", config.Changelog.Sort, "desc")
+	}
+	if len(config.Changelog.Filters.Exclude) != 2 {
+		t.Errorf("Changelog.Filters.Exclude length = %d, want 2", len(config.Changelog.Filters.Exclude))
+	}
+	if len(config.Changelog.Filters.Include) != 1 {
+		t.Errorf("Changelog.Filters.Include length = %d, want 1", len(config.Changelog.Filters.Include))
+	}
+	if len(config.Changelog.Groups) != 2 {
+		t.Fatalf("Changelog.Groups length = %d, want 2", len(config.Changelog.Groups))
+	}
+	if config.Changelog.Groups[0].Title != "Features" {
+		t.Errorf("Groups[0].Title = %q, want %q", config.Changelog.Groups[0].Title, "Features")
+	}
+	if config.Changelog.Groups[0].Regexp != "^feat:" {
+		t.Errorf("Groups[0].Regexp = %q, want %q", config.Changelog.Groups[0].Regexp, "^feat:")
+	}
+	if config.Changelog.Groups[1].Title != "Other" {
+		t.Errorf("Groups[1].Title = %q, want %q", config.Changelog.Groups[1].Title, "Other")
+	}
+	if config.Changelog.Groups[1].Regexp != "" {
+		t.Errorf("Groups[1].Regexp = %q, want empty (catch-all)", config.Changelog.Groups[1].Regexp)
 	}
 }
 
