@@ -80,6 +80,14 @@ Notes:
 - Unset variables are left as literals at config load time and validated when the corresponding pipe runs. This allows commands like `build --skip-notarize` to work without Apple credentials set.
 - Multiline values are allowed (for example, with literal blocks).
 
+#### GitHub Token
+
+A `GITHUB_TOKEN` environment variable is required to publish GitHub releases. Any token with `repo` write access works — a classic or fine-grained personal access token, or a GitHub Actions token. If you use the [GitHub CLI](https://cli.github.com/), you can pass its token directly:
+
+```bash
+GITHUB_TOKEN=$(gh auth token) macreleaser release
+```
+
 ## Commands
 
 - `macreleaser init` - Generate example configuration
