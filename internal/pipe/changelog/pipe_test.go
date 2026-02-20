@@ -202,7 +202,7 @@ func TestPipeRunDefaultDistDir(t *testing.T) {
 	}
 
 	// Clean up dist/ created in CWD
-	t.Cleanup(func() { os.RemoveAll("dist") })
+	t.Cleanup(func() { _ = os.RemoveAll("dist") })
 }
 
 func TestPipeString(t *testing.T) {

@@ -9,7 +9,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 **Goal**: End-to-end workflow from init to GitHub release with bare minimum viable functionality
 
 #### Phase 1: Core Foundation + Minimal Config Schema
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-01.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-01.md)**
 - Basic CLI structure and configuration parsing
 - YAML validation and error handling
 - GitHub API client setup
@@ -17,7 +17,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: `project.workspace`, multiple architectures, custom archive options, Homebrew integration
 
 #### Phase 2: Basic Build with One Arch, One Config
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-02.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-02.md)**
 - xcodebuild integration for single target
 - Archive creation for current machine architecture only
 - Basic DMG/ZIP packaging with defaults
@@ -25,7 +25,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Parallel builds, custom archive styling
 
 #### Phase 3: Basic Code Signing
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-03.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-03.md)**
 - Developer ID certificate handling from keychain
 - codesign integration with identity from config
 - Basic signature verification
@@ -33,7 +33,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Multiple certificates, custom signing options
 
 #### Phase 4: Basic Notarization
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-04.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-04.md)**
 - notarytool integration with Apple ID auth
 - Upload and basic polling workflow
 - Ticket stapling to archive
@@ -41,7 +41,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Custom retry logic, advanced notarization options
 
 #### Phase 5: Basic Release to GitHub
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-05.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-05.md)**
 - GitHub releases API integration
 - Asset upload (single archive)
 - Basic version tagging from git
@@ -49,7 +49,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Changelog generation, draft releases, multiple assets
 
 #### Phase 6: Basic Cask Generation and Custom Tap Support Only
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-06.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-06.md)**
 - Cask generation from release info
 - Custom tap direct commits (write permissions)
 - Basic SHA256 hash calculation
@@ -57,7 +57,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Official tap PRs, cask customization, dependency detection
 
 #### Phase 7: Pipeline Robustness
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-01-PHASE-07.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-01-PHASE-07.md)**
 - Tolerant env var resolution with deferred validation in CheckPipes
 - `--skip-notarize` flag for quick local pipeline validation
 - Output directory conflict detection
@@ -70,7 +70,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 **Goal**: Automated testing, linting, and release pipeline for macreleaser itself using GoReleaser and GitHub Actions
 
 #### Phase 1: GoReleaser Configuration
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-01.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-02-PHASE-01.md)**
 - Version package ldflags injection (const → var)
 - `.goreleaser.yaml` with darwin/amd64 + darwin/arm64 builds
 - Changelog generation, archive naming
@@ -79,7 +79,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: GitHub Actions workflows, Homebrew tap formula
 
 #### Phase 2: CI Workflow
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-02.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-02-PHASE-02.md)**
 - `.github/workflows/ci.yml` on push to main and PRs
 - Linting with golangci-lint, `go vet`, `go test`
 - macOS smoke test: build binary, run `init` + `check`
@@ -87,7 +87,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Full Xcode integration test, coverage reporting
 
 #### Phase 3: Release Workflow
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-02-PHASE-03.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-02-PHASE-03.md)**
 - `.github/workflows/release.yml` triggered on `v*` tag push
 - GoReleaser action for build + GitHub release
 - Homebrew formula published to `macreleaser/homebrew-tap`
@@ -99,7 +99,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 **Goal**: Embedded GitHub Action for macOS code signing setup and macreleaser installation, enabling automated release pipelines in CI
 
 #### Phase 1: Code Signing Setup Action
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-03-PHASE-01.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-03-PHASE-01.md)**
 - Composite action at repo root (`action.yml`)
 - Temporary keychain creation and `.p12` certificate import
 - macreleaser binary installation from GitHub releases
@@ -108,7 +108,7 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **Out of Scope**: Post-step cleanup, notarization credential setup, integration testing
 
 #### Phase 2: Integration Testing
-- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-03-PHASE-02.md)**
+- **📋 [Detailed Implementation Plan](plans/PLAN-MILESTONE-03-PHASE-02.md)**
 - CI test workflow in testapp: exercises action and runs `macreleaser build --skip-notarize`
 - Release workflow in testapp: tag-triggered full pipeline with notarization
 - Validates keychain setup, signing identity discovery, and binary installation
