@@ -23,8 +23,9 @@ func (Pipe) Run(ctx *context.Context) error {
 	outputDir := ctx.Artifacts.BuildOutputDir
 
 	// Derive app name without extension for package naming
+	// Replace spaces with hyphens for safe filenames (GitHub converts spaces to dots in asset names)
 	appBase := filepath.Base(ctx.Artifacts.AppPath)
-	appName := strings.TrimSuffix(appBase, ".app")
+	appName := strings.ReplaceAll(strings.TrimSuffix(appBase, ".app"), " ", "-")
 
 	for _, format := range cfg.Archive.Formats {
 		switch format {

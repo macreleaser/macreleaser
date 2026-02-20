@@ -3,6 +3,7 @@ package homebrew
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -85,7 +86,7 @@ func RenderCask(data CaskData) (string, error) {
 // BuildAssetURL constructs the GitHub release asset download URL.
 func BuildAssetURL(owner, repo, tag, filename string) string {
 	return fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/%s",
-		owner, repo, tag, filename)
+		owner, repo, tag, url.PathEscape(filename))
 }
 
 // SelectPackage selects the preferred archive from the package list for

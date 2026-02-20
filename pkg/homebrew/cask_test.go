@@ -244,6 +244,10 @@ func TestBuildAssetURL(t *testing.T) {
 			owner: "myorg", repo: "myapp", tag: "v0.1.0", filename: "MyApp-0.1.0.dmg",
 			want: "https://github.com/myorg/myapp/releases/download/v0.1.0/MyApp-0.1.0.dmg",
 		},
+		{
+			owner: "owner", repo: "repo", tag: "v1.0.0", filename: "My App-v1.0.0.zip",
+			want: "https://github.com/owner/repo/releases/download/v1.0.0/My%20App-v1.0.0.zip",
+		},
 	}
 
 	for _, tt := range tests {
