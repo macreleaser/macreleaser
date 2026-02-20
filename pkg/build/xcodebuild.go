@@ -44,6 +44,9 @@ func BuildArchiveArgs(args XcodebuildArgs) []string {
 
 	cmdArgs = append(cmdArgs, "archive")
 
+	// Skip code signing during archive — macreleaser re-signs with codesign
+	cmdArgs = append(cmdArgs, "CODE_SIGN_IDENTITY=-")
+
 	// Build settings go after the action
 	if args.Version != "" {
 		cmdArgs = append(cmdArgs, "MARKETING_VERSION="+args.Version)

@@ -25,6 +25,7 @@ func TestBuildArchiveArgs(t *testing.T) {
 				"-configuration", "Release",
 				"-archivePath", "dist/MyApp/v1.0.0/MyApp.xcarchive",
 				"archive",
+				"CODE_SIGN_IDENTITY=-",
 			},
 		},
 		{
@@ -42,6 +43,7 @@ func TestBuildArchiveArgs(t *testing.T) {
 				"-configuration", "Release",
 				"-archivePath", "dist/MyApp/v1.0.0/MyApp.xcarchive",
 				"archive",
+				"CODE_SIGN_IDENTITY=-",
 			},
 		},
 		{
@@ -52,12 +54,13 @@ func TestBuildArchiveArgs(t *testing.T) {
 			want: []string{
 				"-scheme", "MyApp",
 				"archive",
+				"CODE_SIGN_IDENTITY=-",
 			},
 		},
 		{
 			name: "empty args",
 			args: XcodebuildArgs{},
-			want: []string{"archive"},
+			want: []string{"archive", "CODE_SIGN_IDENTITY=-"},
 		},
 		{
 			name: "with version injection",
@@ -76,6 +79,7 @@ func TestBuildArchiveArgs(t *testing.T) {
 				"-configuration", "Release",
 				"-archivePath", "dist/MyApp.xcarchive",
 				"archive",
+				"CODE_SIGN_IDENTITY=-",
 				"MARKETING_VERSION=1.2.3",
 				"CURRENT_PROJECT_VERSION=42",
 			},
@@ -89,6 +93,7 @@ func TestBuildArchiveArgs(t *testing.T) {
 			want: []string{
 				"-scheme", "MyApp",
 				"archive",
+				"CODE_SIGN_IDENTITY=-",
 				"MARKETING_VERSION=2.0.0",
 			},
 		},
