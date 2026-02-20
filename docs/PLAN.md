@@ -94,9 +94,26 @@ This document describes the implementation plan of MacReleaser. The current stat
 - **In Scope**: Cross-compiled darwin binaries, changelog, tap formula
 - **Out of Scope**: Binary signing/notarization, official Homebrew core
 
-### Milestone 3: Custom GitHub action
-- GitHub action that wraps macreleaser (`action-macreleaser`)
-- Basic integration testing with test Xcode project
+### Milestone 3: GitHub Action
+
+**Goal**: Embedded GitHub Action for macOS code signing setup and macreleaser installation, enabling automated release pipelines in CI
+
+#### Phase 1: Code Signing Setup Action
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-03-PHASE-01.md)**
+- Composite action at repo root (`action.yml`)
+- Temporary keychain creation and `.p12` certificate import
+- macreleaser binary installation from GitHub releases
+- Release workflow tag pattern narrowed from `v*` to `v*.*.*` for action version tag compatibility
+- **In Scope**: Keychain setup, cert import, binary install, tag pattern fix
+- **Out of Scope**: Post-step cleanup, notarization credential setup, integration testing
+
+#### Phase 2: Integration Testing
+- **📋 [Detailed Implementation Plan](PLAN-MILESTONE-03-PHASE-02.md)**
+- CI test workflow in testapp: exercises action and runs `macreleaser build --skip-notarize`
+- Release workflow in testapp: tag-triggered full pipeline with notarization
+- Validates keychain setup, signing identity discovery, and binary installation
+- **In Scope**: Two workflows in testapp (CI test + release), Xcode version pinning, secrets documentation
+- **Out of Scope**: Self-hosted runner support, multi-OS/Xcode matrix testing
 
 ### Milestone 4: Enhanced Features
 - Homebrew official tap integration

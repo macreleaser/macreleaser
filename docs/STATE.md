@@ -99,9 +99,18 @@
 - ✅ Source-build Homebrew formula (`Formula/macreleaser.rb`) with `go build` and ldflags
 - ✅ Auto-update workflow in tap repo updates formula URL and SHA256 on new releases
 
-## Milestone 3: Custom GitHub action
+## Milestone 3: GitHub Action
 
-**To be planned**
+**Phase 1** (Planned): Code signing setup action
+- Composite action at repo root (`action.yml`)
+- Temporary keychain creation and `.p12` certificate import
+- macreleaser binary installation from GitHub releases
+- Release workflow tag pattern narrowed from `v*` to `v*.*.*`
+
+**Phase 2** (Planned): Integration testing
+- CI test workflow in testapp: exercises action, runs `macreleaser build --skip-notarize`
+- Release workflow in testapp: tag-triggered full pipeline with notarization
+- Validates keychain setup, signing identity discovery, and binary installation
 
 ## Milestone 4: Enhanced Features
 
