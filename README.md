@@ -37,16 +37,21 @@ brew install macreleaser/tap/macreleaser
 
 ### GitHub Actions
 
-MacReleaser provides a composite action that sets up macOS code signing and installs the binary:
+MacReleaser provides a GitHub Action that sets up macOS code signing, installs the binary, and runs `macreleaser release`:
 
 ```yaml
 - uses: macreleaser/macreleaser@v1
   with:
     p12-base64: ${{ secrets.P12_BASE64 }}
     p12-password: ${{ secrets.P12_PASSWORD }}
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    APPLE_ID: ${{ secrets.APPLE_ID }}
+    APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
 ```
 
-This creates a temporary keychain, imports your Developer ID certificate, and installs `macreleaser`. See [CI Usage](#ci-usage) for a full workflow example.
+See [CI Usage](#ci-usage) for a full workflow example.
 
 ### Basic Usage
 
@@ -155,7 +160,7 @@ All commands support `--debug` for verbose output and `--config` to specify a cu
 
 ## CI Usage
 
-The `macreleaser/macreleaser` action handles the macOS code signing setup that is typically error-prone in CI:
+The `macreleaser/macreleaser` action sets up code signing, installs the binary, and runs `macreleaser release` by default:
 
 ```yaml
 name: Release
@@ -176,7 +181,6 @@ jobs:
         with:
           p12-base64: ${{ secrets.P12_BASE64 }}
           p12-password: ${{ secrets.P12_PASSWORD }}
-      - run: macreleaser release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -190,7 +194,8 @@ jobs:
 |-------|----------|---------|-------------|
 | `p12-base64` | yes | — | Base64-encoded `.p12` certificate file |
 | `p12-password` | yes | — | Password for the `.p12` file |
-| `macreleaser-version` | no | `latest` | Version to install (e.g., `v0.3.0`) |
+| `command` | no | `release` | MacReleaser command to run after setup (set to empty string to skip) |
+| `macreleaser-version` | no | `latest` | Version to install (e.g., `v1.0.0`) |
 
 ### Preparing the Certificate Secret
 

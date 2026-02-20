@@ -1,5 +1,5 @@
-name: "Setup MacReleaser"
-description: "Set up macOS code signing and install MacReleaser"
+name: "MacReleaser"
+description: "Set up macOS code signing, install MacReleaser, and run a release pipeline"
 
 inputs:
   p12-base64:
@@ -8,6 +8,10 @@ inputs:
   p12-password:
     description: "Password for the .p12 file"
     required: true
+  command:
+    description: "MacReleaser command to run after setup (set to empty string to skip)"
+    required: false
+    default: "release"
   macreleaser-version:
     description: "MacReleaser version to install (default: latest)"
     required: false
@@ -77,3 +81,8 @@ runs:
         echo "Installed macreleaser $(macreleaser --version)"
       env:
         GH_TOKEN: ${{ github.token }}
+
+    - name: Run MacReleaser
+      if: inputs.command != ''
+      shell: bash
+      run: macreleaser ${{ inputs.command }}
